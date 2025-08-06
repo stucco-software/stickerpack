@@ -1,0 +1,17 @@
+html {
+  font-family: "Degular";
+  font-weight: 300;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Basteleur";
+  font-weight: 600;
+}
+
+mark {
+  font-family: "Basteleur";
+  font-weight: 600;
+  padding: 1rem;
+  display: inline-block;
+  border-radius: 50%;
+}
