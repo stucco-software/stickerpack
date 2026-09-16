@@ -109,3 +109,11 @@ it('preserves entries this version does not understand across writes', async () 
   await storage.remove(a)
   expect(JSON.parse(backend.map.get('stickerpack:s'))).toEqual([unknownShaped, b])
 })
+
+it('removes stickers even when null entries are stored', async () => {
+  const backend = fakeStorage()
+  const a = sticker('s')
+  backend.setItem('stickerpack:s', JSON.stringify([null, a]))
+  await localStorageAdapter(backend).remove(a)
+  expect(JSON.parse(backend.map.get('stickerpack:s'))).toEqual([null])
+})

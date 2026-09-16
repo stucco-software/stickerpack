@@ -79,7 +79,7 @@ export const localStorageAdapter = (storage) => {
     },
     async remove(annotation) {
       const source = annotation.target.source
-      write(source, readRaw(source).filter((entry) => entry.id !== annotation.id))
+      write(source, readRaw(source).filter((entry) => entry?.id !== annotation.id))
     }
   }
 }
