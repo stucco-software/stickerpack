@@ -1,4 +1,4 @@
-import { it, expect, beforeEach } from 'vitest'
+import { it, expect, beforeEach, vi } from 'vitest'
 import { StickerPackElement, defineStickerPackElement } from './element.js'
 
 beforeEach(() => {
@@ -29,4 +29,16 @@ it('mounts from attributes on connect and unmounts on disconnect', () => {
 
   element.remove()
   expect(document.querySelector('[data-stickerpack]')).toBe(null)
+})
+
+it('warns instead of throwing when StickerPack cannot start', () => {
+  defineStickerPackElement()
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+  const element = document.createElement('sticker-pack')
+  const body = document.body
+  const bodyGetter = vi.spyOn(document, 'body', 'get').mockReturnValue(null)
+  expect(() => body.append(element)).not.toThrow()
+  bodyGetter.mockRestore()
+  expect(warn).toHaveBeenCalled()
+  element.remove()
 })

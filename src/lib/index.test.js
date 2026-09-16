@@ -213,3 +213,15 @@ it('destroying immediately prevents a pending sticker list from rendering', asyn
   await new Promise((resolve) => setTimeout(resolve, 0))
   expect(document.querySelector('[data-stickerpack]')).toBe(null)
 })
+
+it('cleans up the overlay when the trigger is not an element', () => {
+  vi.spyOn(console, 'warn').mockImplementation(() => {})
+  expect(() => StickerPack({ storage: memory(), trigger: {} })).toThrow()
+  expect(document.querySelector('[data-stickerpack]')).toBe(null)
+  expect(globalThis[Symbol.for('stickerpack.active')]).toBeFalsy()
+})
+
+it('ignores a stickers option that is not an array', () => {
+  destroy = StickerPack({ storage: memory(), defaultPack: false, stickers: '/a.png' })
+  expect(shadow().querySelectorAll('.tray img')).toHaveLength(0)
+})

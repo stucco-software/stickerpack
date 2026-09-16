@@ -12,7 +12,7 @@ export { localStorageAdapter }
 // script-tag build alongside an npm import.
 const ACTIVE = Symbol.for('stickerpack.active')
 
-const warn = (message, detail) => console.warn(`stickerpack: ${message}`, detail)
+const warn = (message, ...details) => console.warn(`stickerpack: ${message}`, ...details)
 
 export default function StickerPack(options = {}) {
   if (globalThis[ACTIVE]) {
@@ -23,10 +23,10 @@ export default function StickerPack(options = {}) {
   const { stickers = [], defaultPack: includeDefaultPack = true, trigger } = options
   const storage = options.storage ?? localStorageAdapter()
   const source = pageSource()
-  const ownedStickers = stickers.flatMap((src) => {
+  const ownedStickers = (Array.isArray(stickers) ? stickers : []).flatMap((src) => {
     try {
       return [toSticker(src)]
-    } catch (error) {
+    } catch {
       warn('skipping invalid sticker URL', src)
       return []
     }
@@ -46,32 +46,38 @@ export default function StickerPack(options = {}) {
     }
   })
 
-  const tray = createTray({
-    root: overlay.root,
-    host: overlay.host,
-    stickers: pack,
-    trigger,
-    onOpen: () => overlay.setPeelable(true),
-    onClose: () => overlay.setPeelable(false),
-    onPlace: async ({ src, element, clientX, clientY }) => {
-      let annotation
-      try {
-        const { selectors, x, y } = describe(element, clientX, clientY)
-        annotation = createAnnotation({ src, source, selectors, x, y })
-        overlay.render(annotation)
-      } catch (error) {
-        warn('could not place sticker', error)
-        if (annotation) overlay.unrender(annotation.id)
-        return
+  let tray
+  try {
+    tray = createTray({
+      root: overlay.root,
+      host: overlay.host,
+      stickers: pack,
+      trigger,
+      onOpen: () => overlay.setPeelable(true),
+      onClose: () => overlay.setPeelable(false),
+      onPlace: async ({ src, element, clientX, clientY }) => {
+        let annotation
+        try {
+          const { selectors, x, y } = describe(element, clientX, clientY)
+          annotation = createAnnotation({ src, source, selectors, x, y })
+          overlay.render(annotation)
+        } catch (error) {
+          warn('could not place sticker', error)
+          if (annotation) overlay.unrender(annotation.id)
+          return
+        }
+        try {
+          await storage.add(annotation)
+        } catch (error) {
+          warn('could not save sticker', error)
+          overlay.unrender(annotation.id)
+        }
       }
-      try {
-        await storage.add(annotation)
-      } catch (error) {
-        warn('could not save sticker', error)
-        overlay.unrender(annotation.id)
-      }
-    }
-  })
+    })
+  } catch (error) {
+    overlay.destroy()
+    throw error
+  }
 
   Promise.resolve()
     .then(() => storage.list(source))

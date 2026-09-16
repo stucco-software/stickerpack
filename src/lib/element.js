@@ -12,11 +12,15 @@ export class StickerPackElement extends Base {
     }
     if (!this.isConnected || this.destroyStickerPack) return
     const stickers = (this.getAttribute('stickers') ?? '').split(/\s+/).filter(Boolean)
-    this.destroyStickerPack = StickerPack({
-      stickers,
-      defaultPack: !this.hasAttribute('no-default-pack'),
-      trigger: this.querySelector('[slot="trigger"]') ?? undefined
-    })
+    try {
+      this.destroyStickerPack = StickerPack({
+        stickers,
+        defaultPack: !this.hasAttribute('no-default-pack'),
+        trigger: this.querySelector('[slot="trigger"]') ?? undefined
+      })
+    } catch (error) {
+      console.warn('stickerpack: <sticker-pack> could not start', error)
+    }
   }
 
   disconnectedCallback() {

@@ -8,9 +8,11 @@ const STYLE = `
   position: absolute;
   top: 0;
   left: 0;
-  width: 0;
+  width: 100%;
   height: 0;
-  overflow: visible;
+  /* Stickers near the right edge must not widen the page. */
+  overflow-x: clip;
+  overflow-y: visible;
   z-index: 2147483646;
   pointer-events: none;
 }

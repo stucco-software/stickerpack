@@ -297,7 +297,7 @@ Tap a sticker in the tray, then tap the page. There is no following ghost.
 ## Rendering (Overlay)
 
 - **Structure:** a host `<div>` appended to `<body>`. Its shadow root contains:
-  - a layer with `position: absolute; top: 0; left: 0; width: 0; height: 0; overflow: visible` and a very high `z-index`, holding the stickers
+  - a layer with `position: absolute; top: 0; left: 0; width: 100%; height: 0; overflow-x: clip; overflow-y: visible` and a very high `z-index`, holding the stickers. Horizontal clipping stops stickers near the right edge from widening the page.
   - the floating button and tray (`position: fixed`)
   - the ghost and the capture layer while placing
 - **Position:** `anchorRect.left - layerRect.left + anchorRect.width * x / 100`, and the same for top and height, with the sticker centered on that point. Measuring against the layer's own rect absorbs body margins, positioned ancestors and translate transforms, with no separate scroll math.
