@@ -1,62 +1,74 @@
 <script>
   import { onMount } from 'svelte'
-  import { mountStickerPack } from '$lib/stickerpack.js'
+  import { dev } from '$app/environment'
+  import StickerPack from '$lib/index.js'
 
-  onMount(() => {
-    mountStickerPack()
-  })
+  // The default pack is served from stickers.stucco.software. Until that
+  // domain is live, use the local copy in dev so stickers render.
+  const options = dev
+    ? { defaultPack: false, stickers: ['/stickers/eyes.png'] }
+    : {}
+
+  onMount(() => StickerPack(options))
 </script>
 
-<h1>
-  Stickers, for Websites
-</h1>
+<main>
 
-<p>
-  Only the finest stickers, for your website. Just add HTML or use the JavaScript API to let folks stick stuff to your page.
-</p>
+  <h1>
+    Stickers, for Websites
+  </h1>
 
-<mark>Easy!</mark>
+  <p>
+    Only the finest stickers, for your website. Just add HTML or use the JavaScript API to let folks stick stuff to your page.
+  </p>
 
-<h2>
-  Use Some HTML
-</h2>
+  <mark>Easy!</mark>
 
-<p>Two lines of HTML to add the Sticker Pack Custom Element!</p>
+  <h2>
+    Use Some HTML
+  </h2>
 
-<pre><code>
-  &lt;script src="stickerpack.js">&lt;/script>
-  &lt;sticker-pack />
-</code></pre>
+  <p>Two lines of HTML to add the Sticker Pack Custom Element!</p>
 
-<mark>Fun!</mark>
+  <pre><code>
+    &lt;script type="module" src="stickerpack.js">&lt;/script>
+    &lt;sticker-pack>&lt;/sticker-pack>
+  </code></pre>
 
-<h2>
-  Use Some JavaScripts
-</h2>
+  <mark>Fun!</mark>
 
-<p>So you sling some code? Make stickers happen where, when, and how you want.</p>
+  <h2>
+    Use Some JavaScripts
+  </h2>
 
-<pre><code>
-  // import the library
-  import StickerPack from "stickerpack"
+  <p>So you sling some code? Make stickers happen where, when, and how you want.</p>
 
-  // mount to the DOM
-  let destroyStickerPack = StickerPack()
+  <pre><code>
+    // import the library
+    import StickerPack from "stickerpack"
 
-  // remove from the DOM
-  destroyStickerPack()
-</code></pre>
+    // mount to the DOM
+    let destroyStickerPack = StickerPack()
 
-<mark>Wow!</mark>
+    // remove from the DOM
+    destroyStickerPack()
+  </code></pre>
 
-<p>
-  From <a href="https://stucco.software">Stucco Software</a>
-</p>
+  <mark>Wow!</mark>
 
+  <p>
+    From <a href="https://stucco.software">Stucco Software</a>
+  </p>
+</main>
 
-<template id="eyesticker">
-  <img
-    style="position: absolute; width: 2rem; height: 2rem"
-    class="eyes"
-    src="/stickers/eyes.png">
-</template>
+<style>
+  main {
+    max-width: 42rem;
+    margin: auto;
+  }
+  h1,
+  h2,
+  p {
+    padding-block: 1rem;
+  }
+</style>
