@@ -27,7 +27,10 @@ export const localStorageAdapter = (storage) => {
   }
   if (!backend) fallBack()
 
-  const attempt = (operation) => {
+  // Falling back to memory only makes sense for reads: if the backend is unusable we can't
+  // read what was there before anyway. A write failure (e.g. a full quota) shouldn't silently
+  // switch future reads/writes to memory - it should just reject that one operation.
+  const attemptRead = (operation) => {
     try {
       return operation(backend)
     } catch (error) {
@@ -37,8 +40,10 @@ export const localStorageAdapter = (storage) => {
     }
   }
 
-  const read = (source) => {
-    const raw = attempt((store) => store.getItem(PREFIX + source))
+  // The raw, unfiltered array for a source: unknown/invalid entries are kept as-is so a
+  // future version's data isn't discarded when this version writes back to the same key.
+  const readRaw = (source) => {
+    const raw = attemptRead((store) => store.getItem(PREFIX + source))
     if (raw == null) return []
     let parsed
     try {
@@ -51,27 +56,30 @@ export const localStorageAdapter = (storage) => {
       console.warn('stickerpack: ignoring unreadable stickers for', source)
       return []
     }
-    return parsed.filter((entry) => {
+    return parsed
+  }
+
+  const readValid = (source) =>
+    readRaw(source).filter((entry) => {
       if (isAnnotation(entry)) return true
       console.warn('stickerpack: skipping invalid stored sticker', entry)
       return false
     })
-  }
 
-  const write = (source, annotations) =>
-    attempt((store) => store.setItem(PREFIX + source, JSON.stringify(annotations)))
+  const write = (source, entries) =>
+    backend.setItem(PREFIX + source, JSON.stringify(entries))
 
   return {
     async list(source) {
-      return read(source)
+      return readValid(source)
     },
     async add(annotation) {
       const source = annotation.target.source
-      write(source, [...read(source), annotation])
+      write(source, [...readRaw(source), annotation])
     },
     async remove(annotation) {
       const source = annotation.target.source
-      write(source, read(source).filter((entry) => entry.id !== annotation.id))
+      write(source, readRaw(source).filter((entry) => entry.id !== annotation.id))
     }
   }
 }

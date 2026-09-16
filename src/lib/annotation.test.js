@@ -40,6 +40,14 @@ describe('altFromUrl', () => {
   it('derives alt text from the file name', () => {
     expect(altFromUrl('https://example.com/stickers/big-duck_face.png')).toBe('big duck face')
   })
+
+  it('returns an empty string for non-http(s) protocols', () => {
+    expect(altFromUrl('data:image/png;base64,abc123')).toBe('')
+  })
+
+  it('falls back to the raw segment when decoding fails', () => {
+    expect(altFromUrl('https://x.test/100%-cool.png')).toBe('100% cool')
+  })
 })
 
 describe('toSticker', () => {
@@ -74,6 +82,17 @@ describe('createAnnotation', () => {
     const annotation = createAnnotation({ src: 'https://x.test/a.png', source: 's', selectors, x: 1, y: 2 })
     expect(annotation.id).toMatch(/^urn:uuid:[0-9a-f-]{36}$/)
   })
+
+  it('falls back to a manual v4 uuid when crypto.randomUUID is unavailable', () => {
+    const original = crypto.randomUUID
+    Object.defineProperty(crypto, 'randomUUID', { value: undefined, configurable: true })
+    try {
+      const annotation = createAnnotation({ src: 'https://x.test/a.png', source: 's', selectors, x: 1, y: 2 })
+      expect(annotation.id).toMatch(/^urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/)
+    } finally {
+      Object.defineProperty(crypto, 'randomUUID', { value: original, configurable: true })
+    }
+  })
 })
 
 describe('isAnnotation', () => {
@@ -94,10 +113,40 @@ describe('isAnnotation', () => {
     expect(isAnnotation({ ...valid, target: { ...valid.target, selector: [{ type: 'CssSelector', value: 'body' }] } })).toBe(false)
     expect(isAnnotation({ ...valid, target: { ...valid.target, selector: [{ type: 'XPathSelector', value: '/', refinedBy }] } })).toBe(false)
   })
+
+  it('accepts an annotation carrying an unknown selector type alongside a known one', () => {
+    const valid = make()
+    const withUnknown = {
+      ...valid,
+      target: {
+        ...valid.target,
+        selector: [
+          { type: 'RangeSelector', startContainer: '/x', refinedBy },
+          ...valid.target.selector
+        ]
+      }
+    }
+    expect(isAnnotation(withUnknown)).toBe(true)
+  })
 })
 
 describe('position', () => {
   it('returns bare selectors and the position', () => {
     expect(position(make())).toEqual({ selectors, x: 42.5, y: 61.25 })
+  })
+
+  it('ignores unknown selector types when reading position', () => {
+    const valid = make()
+    const withUnknown = {
+      ...valid,
+      target: {
+        ...valid.target,
+        selector: [
+          { type: 'RangeSelector', startContainer: '/x', refinedBy },
+          ...valid.target.selector
+        ]
+      }
+    }
+    expect(position(withUnknown)).toEqual({ selectors, x: 42.5, y: 61.25 })
   })
 })

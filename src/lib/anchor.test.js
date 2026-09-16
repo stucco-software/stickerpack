@@ -71,10 +71,10 @@ describe('describe', () => {
     ])
   })
 
-  it('anchors clicks on <html> to <body>', () => {
+  it('anchors clicks on <html> to <body> and omits a page-wide quote', () => {
     setRect(document.body, 0, 0, 800, 600)
     const result = describeTarget(document.documentElement, 400, 300)
-    expect(result.selectors[0]).toEqual({ type: 'CssSelector', value: 'body' })
+    expect(result.selectors).toEqual([{ type: 'CssSelector', value: 'body' }])
     expect([result.x, result.y]).toEqual([50, 50])
   })
 
@@ -132,5 +132,23 @@ describe('resolve', () => {
 
   it('treats an invalid css selector as no match', () => {
     expect(resolve([{ type: 'CssSelector', value: '<<' }])).toBe(null)
+  })
+
+  it('restricts the quote fallback to the anchor tag encoded in the css selector', () => {
+    document.body.innerHTML = '<section><h1>A heading that is longer than thirty-two chars</h1><p>body</p></section>'
+    const section = document.querySelector('section')
+    setRect(section, 0, 0, 100, 100)
+    const { selectors } = describeTarget(section, 1, 1)
+    document.body.prepend(document.createElement('nav'))
+    expect(resolve(selectors)).toBe(section)
+  })
+
+  it('requires a short quote to match an element whole, not merely as a prefix', () => {
+    document.body.innerHTML = '<p>Hi</p><p>History</p>'
+    const greeting = document.querySelector('p')
+    setRect(greeting, 0, 0, 10, 10)
+    const { selectors } = describeTarget(greeting, 1, 1)
+    greeting.remove()
+    expect(resolve(selectors)).toBe(null)
   })
 })

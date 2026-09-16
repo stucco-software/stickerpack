@@ -44,12 +44,19 @@ const anchorFor = (element) => {
 
 const percent = (offset, size) => size > 0 ? Math.round(offset / size * 10000) / 100 : 50
 
+// The last path step's tag, e.g. 'section' from 'body > section:nth-child(1)', or 'body' from 'body'.
+const CSS_TAIL_TAG = /([^\s>]+?)(?::nth-child\(\d+\))?$/
+const tagFromCss = (value) => CSS_TAIL_TAG.exec(value)?.[1] ?? null
+
 export const describe = (element, clientX, clientY) => {
   const anchor = anchorFor(element)
   const rect = anchor.getBoundingClientRect()
   const selectors = [{ type: 'CssSelector', value: cssPath(anchor) }]
-  const exact = normalizedText(anchor, QUOTE_LENGTH)
-  if (exact) selectors.push({ type: 'TextQuoteSelector', exact })
+  const body = anchor.ownerDocument.body
+  if (anchor !== body) {
+    const exact = normalizedText(anchor, QUOTE_LENGTH)
+    if (exact) selectors.push({ type: 'TextQuoteSelector', exact })
+  }
   return {
     selectors,
     x: percent(clientX - rect.left, rect.width),
@@ -66,7 +73,14 @@ const depth = (element) => {
 export const resolve = (selectors, doc = document) => {
   const css = selectors.find((selector) => selector.type === 'CssSelector')
   const quote = selectors.find((selector) => selector.type === 'TextQuoteSelector')?.exact
-  const matches = (element) => !quote || normalizedText(element, quote.length) === quote
+  // A quote shorter than QUOTE_LENGTH is the element's whole text, not a truncated prefix,
+  // so it must match a candidate's whole text rather than merely its first N characters.
+  const matches = (element) => {
+    if (!quote) return true
+    return quote.length < QUOTE_LENGTH
+      ? normalizedText(element, QUOTE_LENGTH) === quote
+      : normalizedText(element, quote.length) === quote
+  }
 
   if (css) {
     let element = null
@@ -80,8 +94,11 @@ export const resolve = (selectors, doc = document) => {
 
   if (!quote) return null
 
+  const tag = css ? tagFromCss(css.value) : null
+
   const candidates = Array.from(doc.body.querySelectorAll('*'))
     .filter((element) => !SKIP.has(element.localName))
+    .filter((element) => !tag || element.localName === tag)
     .map((element, order) => ({ element, order, depth: depth(element) }))
     .sort((a, b) => b.depth - a.depth || a.order - b.order)
 

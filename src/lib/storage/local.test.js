@@ -65,7 +65,7 @@ it('treats unreadable JSON as empty', async () => {
   expect(warn).toHaveBeenCalled()
 })
 
-it('falls back to memory once when storage throws', async () => {
+it('falls back to memory once when storage throws on read', async () => {
   const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
   const broken = {
     getItem: () => { throw new Error('blocked') },
@@ -78,9 +78,34 @@ it('falls back to memory once when storage throws', async () => {
   expect(warn).toHaveBeenCalledTimes(1)
 })
 
+it('rejects the write and does not fall back when only setItem throws', async () => {
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+  const backend = {
+    getItem: () => null,
+    setItem: () => { throw new Error('quota exceeded') }
+  }
+  const storage = localStorageAdapter(backend)
+  const a = sticker('s')
+  await expect(storage.add(a)).rejects.toThrow()
+  expect(warn).not.toHaveBeenCalled()
+})
+
 it('uses window.localStorage by default', async () => {
   localStorage.clear()
   const a = sticker('s')
   await localStorageAdapter().add(a)
   expect(JSON.parse(localStorage.getItem('stickerpack:s'))).toEqual([a])
+})
+
+it('preserves entries this version does not understand across writes', async () => {
+  const backend = fakeStorage()
+  const unknownShaped = { weird: true }
+  const a = sticker('s')
+  backend.setItem('stickerpack:s', JSON.stringify([unknownShaped, a]))
+  const storage = localStorageAdapter(backend)
+  const b = sticker('s')
+  await storage.add(b)
+  expect(JSON.parse(backend.map.get('stickerpack:s'))).toEqual([unknownShaped, a, b])
+  await storage.remove(a)
+  expect(JSON.parse(backend.map.get('stickerpack:s'))).toEqual([unknownShaped, b])
 })
