@@ -99,3 +99,53 @@ it('destroy removes the host', () => {
   overlay.destroy()
   expect(document.querySelector('[data-stickerpack]')).toBe(null)
 })
+
+it('repositions on a capture-phase load event fired anywhere on the page', async () => {
+  const p = document.querySelector('p')
+  const img = document.createElement('img')
+  document.body.append(img)
+  let rect = { left: 100, top: 50, width: 200, height: 40 }
+  p.getBoundingClientRect = () => rect
+  overlay.root.querySelector('.layer').getBoundingClientRect = () => ({ left: 0, top: 0, width: 0, height: 0 })
+  overlay.render(annotationAt('body > p:nth-child(1)'))
+  await nextFrame()
+  await nextFrame()
+  expect(stickers()[0].style.left).toBe('200px')
+
+  // Change the rect with no DOM mutation afterwards, so only the load
+  // listener (not the MutationObserver's unconditional schedule) can
+  // account for the reposition below.
+  rect = { left: 300, top: 50, width: 200, height: 40 }
+  img.dispatchEvent(new Event('load'))
+  await nextFrame()
+  await nextFrame()
+  expect(stickers()[0].style.left).toBe('400px')
+})
+
+it('removes the capture-phase load listener on destroy', () => {
+  const removeSpy = vi.spyOn(document, 'removeEventListener')
+  overlay.destroy()
+  expect(removeSpy).toHaveBeenCalledWith('load', expect.any(Function), true)
+  removeSpy.mockRestore()
+})
+
+it('skips the orphan scan on removal-only mutations but still resolves once matching content appears', async () => {
+  overlay.render(annotationAt('body > section:nth-child(2)'))
+  expect(stickers()).toHaveLength(0)
+  const decoy = document.createElement('span')
+  document.body.insertBefore(decoy, overlay.host)
+  await wait(400)
+  decoy.remove()
+  await wait(400)
+  expect(stickers()).toHaveLength(0)
+  document.body.insertBefore(document.createElement('section'), overlay.host)
+  await wait(400)
+  expect(stickers()).toHaveLength(1)
+})
+
+it('re-appends the host if something removes it from the page', async () => {
+  overlay.host.remove()
+  expect(document.body.contains(overlay.host)).toBe(false)
+  await wait(0)
+  expect(document.body.contains(overlay.host)).toBe(true)
+})

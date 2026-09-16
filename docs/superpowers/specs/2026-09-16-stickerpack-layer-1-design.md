@@ -301,12 +301,14 @@ Tap a sticker in the tray, then tap the page. There is no following ghost.
   - the floating button and tray (`position: fixed`)
   - the ghost and the capture layer while placing
 - **Position:** `anchorRect.left - layerRect.left + anchorRect.width * x / 100`, and the same for top and height, with the sticker centered on that point. Measuring against the layer's own rect absorbs body margins, positioned ancestors and translate transforms, with no separate scroll math.
-- **Repositioning** is batched into a single `requestAnimationFrame`, triggered by:
+- **Repositioning** is batched into a single `requestAnimationFrame` (reads batched before writes), triggered by:
   - window `resize`
   - `document.fonts.ready`
-  - a `ResizeObserver` on `document.documentElement` and on each anchor element
+  - a `ResizeObserver` on `document.documentElement`, on `document.body` and on each anchor element
+  - a capture-phase `load` listener on `document` (catches lazy images/iframes finishing load anywhere on the page after render; capture phase is required because `load` does not bubble)
 - **Removed anchors:** on each reposition pass, a rendered sticker whose anchor is no longer connected (`!element.isConnected`) is unrendered and becomes orphaned.
-- **Late content:** a `MutationObserver` on `body` (subtree, childList, characterData) re-runs `resolve` for orphaned stickers, debounced to 250ms. It ignores mutations inside the overlay host.
+- **Late content:** a `MutationObserver` on `body` (subtree, childList, characterData) always schedules a reposition, but only re-runs `resolve` for orphaned stickers (debounced to 250ms) when there is at least one orphan and a mutation record adds nodes or changes character data; removal-only mutations reschedule a reposition but skip the orphan scan. It ignores mutations inside the overlay host.
+- **Removed host:** the same `MutationObserver` callback re-appends the overlay host to `body` if something else removes it from the page.
 
 ## Error Handling
 

@@ -164,7 +164,7 @@ export const createTray = ({ root, host, stickers, trigger, onOpen, onClose, onP
     else if (state === 'placing') stopPlacing()
   }
 
-  root.append(style, capture, ghost, tray, ...(floating ? [floating] : []))
+  root.append(style, capture, ghost, ...(floating ? [floating] : []), tray)
   triggerElement.addEventListener('click', toggle)
   capture.addEventListener('pointermove', onPointerMove)
   capture.addEventListener('click', onCaptureClick)

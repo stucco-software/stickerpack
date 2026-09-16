@@ -77,10 +77,13 @@ export const createOverlay = () => {
     frame = 0
     if (destroyed) return
     const origin = layer.getBoundingClientRect()
+    const placements = []
     for (const entry of entries.values()) {
       if (entry.element && !entry.element.isConnected) detach(entry)
       if (!entry.element) continue
-      const rect = entry.element.getBoundingClientRect()
+      placements.push([entry, entry.element.getBoundingClientRect()])
+    }
+    for (const [entry, rect] of placements) {
       entry.img.style.left = `${rect.left - origin.left + rect.width * entry.x / 100}px`
       entry.img.style.top = `${rect.top - origin.top + rect.height * entry.y / 100}px`
     }
@@ -97,14 +100,21 @@ export const createOverlay = () => {
     schedule()
   }
 
-  const mutationObserver = new MutationObserver(() => {
+  const mutationObserver = new MutationObserver((records) => {
+    if (!destroyed && !host.isConnected) document.body.append(host)
     schedule()
-    clearTimeout(timer)
-    timer = setTimeout(resolveOrphans, ORPHAN_DEBOUNCE)
+    const hasOrphan = Array.from(entries.values()).some((entry) => !entry.element)
+    const hasContentChange = records.some((record) => record.type === 'characterData' || record.addedNodes.length > 0)
+    if (hasOrphan && hasContentChange) {
+      clearTimeout(timer)
+      timer = setTimeout(resolveOrphans, ORPHAN_DEBOUNCE)
+    }
   })
   mutationObserver.observe(document.body, { childList: true, subtree: true, characterData: true })
   resizeObserver?.observe(document.documentElement)
+  resizeObserver?.observe(document.body)
   window.addEventListener('resize', schedule)
+  document.addEventListener('load', schedule, true)
   document.fonts?.ready.then(schedule)
 
   return {
@@ -154,6 +164,7 @@ export const createOverlay = () => {
       mutationObserver.disconnect()
       resizeObserver?.disconnect()
       window.removeEventListener('resize', schedule)
+      document.removeEventListener('load', schedule, true)
       entries.clear()
       host.remove()
     }
