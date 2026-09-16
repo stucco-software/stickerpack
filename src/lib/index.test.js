@@ -133,3 +133,83 @@ it('warns and returns a no-op for a second instance', () => {
   destroy = StickerPack({ storage: memory() })
   expect(document.querySelectorAll('[data-stickerpack]')).toHaveLength(1)
 })
+
+it('warns and returns a no-op when another bundle already has an active instance', () => {
+  const ACTIVE = Symbol.for('stickerpack.active')
+  globalThis[ACTIVE] = () => {}
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+  const result = StickerPack({ storage: memory() })
+  expect(warn).toHaveBeenCalledTimes(1)
+  result()
+  expect(document.querySelectorAll('[data-stickerpack]')).toHaveLength(0)
+  delete globalThis[ACTIVE]
+})
+
+it('warns and does not render when describing the placement throws', async () => {
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+  const unhandled = vi.fn()
+  window.addEventListener('unhandledrejection', unhandled)
+  const storage = memory()
+  destroy = StickerPack({ storage, defaultPack: false, stickers: ['/a.png'] })
+  const p = document.querySelector('p')
+  p.getBoundingClientRect = () => { throw new Error('boom') }
+  const host = document.querySelector('[data-stickerpack]')
+  document.elementsFromPoint = () => [host, p]
+  shadow().querySelector('.trigger').click()
+  shadow().querySelector('.tray button').click()
+  shadow().querySelector('.capture').dispatchEvent(new MouseEvent('click', { clientX: 1, clientY: 1, bubbles: true }))
+  await vi.waitFor(() => expect(warn).toHaveBeenCalledWith('stickerpack: could not place sticker', expect.any(Error)))
+  expect(stickers()).toHaveLength(0)
+  expect(storage.add).not.toHaveBeenCalled()
+  await new Promise((resolve) => setTimeout(resolve, 0))
+  expect(unhandled).not.toHaveBeenCalled()
+  window.removeEventListener('unhandledrejection', unhandled)
+})
+
+it('skips owner sticker URLs that fail to parse', () => {
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+  destroy = StickerPack({ storage: memory(), defaultPack: false, stickers: ['http://[', '/ok.png'] })
+  expect(shadow().querySelectorAll('.tray img')).toHaveLength(1)
+  expect(warn).toHaveBeenCalledWith('stickerpack: skipping invalid sticker URL', 'http://[')
+})
+
+it('re-renders a sticker when removing fails', async () => {
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+  const saved = createAnnotation({
+    src: 'https://stickers.stucco.software/eyes.png',
+    source: pageSource(),
+    selectors: [{ type: 'CssSelector', value: 'body > p:nth-child(1)' }],
+    x: 50,
+    y: 50
+  })
+  const storage = memory([saved])
+  storage.remove.mockRejectedValue(new Error('nope'))
+  destroy = StickerPack({ storage })
+  await vi.waitFor(() => expect(stickers()).toHaveLength(1))
+  shadow().querySelector('.trigger').click()
+  stickers()[0].click()
+  expect(stickers()).toHaveLength(0)
+  await vi.waitFor(() => expect(warn).toHaveBeenCalled())
+  await vi.waitFor(() => expect(stickers()).toHaveLength(1))
+})
+
+it('destroying immediately prevents a pending sticker list from rendering', async () => {
+  let resolveList
+  const storage = {
+    list: vi.fn(() => new Promise((resolve) => { resolveList = resolve })),
+    add: vi.fn(async () => {}),
+    remove: vi.fn(async () => {})
+  }
+  const stop = StickerPack({ storage })
+  expect(() => stop()).not.toThrow()
+  await vi.waitFor(() => expect(storage.list).toHaveBeenCalled())
+  resolveList([createAnnotation({
+    src: 'https://stickers.stucco.software/eyes.png',
+    source: pageSource(),
+    selectors: [{ type: 'CssSelector', value: 'body > p:nth-child(1)' }],
+    x: 50,
+    y: 50
+  })])
+  await new Promise((resolve) => setTimeout(resolve, 0))
+  expect(document.querySelector('[data-stickerpack]')).toBe(null)
+})

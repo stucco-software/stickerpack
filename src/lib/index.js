@@ -7,12 +7,15 @@ import { createTray } from './tray.js'
 
 export { localStorageAdapter }
 
-let active = null
+// A Symbol.for key (rather than a module-level variable) so the single-instance guard
+// still works when the page loads more than one bundled copy of this module, e.g. a
+// script-tag build alongside an npm import.
+const ACTIVE = Symbol.for('stickerpack.active')
 
 const warn = (message, detail) => console.warn(`stickerpack: ${message}`, detail)
 
 export default function StickerPack(options = {}) {
-  if (active) {
+  if (globalThis[ACTIVE]) {
     warn('StickerPack() is already running, ignoring this call.')
     return () => {}
   }
@@ -20,10 +23,15 @@ export default function StickerPack(options = {}) {
   const { stickers = [], defaultPack: includeDefaultPack = true, trigger } = options
   const storage = options.storage ?? localStorageAdapter()
   const source = pageSource()
-  const pack = [
-    ...(includeDefaultPack ? defaultPack : []),
-    ...stickers.map((src) => toSticker(src))
-  ]
+  const ownedStickers = stickers.flatMap((src) => {
+    try {
+      return [toSticker(src)]
+    } catch (error) {
+      warn('skipping invalid sticker URL', src)
+      return []
+    }
+  })
+  const pack = [...(includeDefaultPack ? defaultPack : []), ...ownedStickers]
   let destroyed = false
 
   const overlay = createOverlay()
@@ -46,9 +54,16 @@ export default function StickerPack(options = {}) {
     onOpen: () => overlay.setPeelable(true),
     onClose: () => overlay.setPeelable(false),
     onPlace: async ({ src, element, clientX, clientY }) => {
-      const { selectors, x, y } = describe(element, clientX, clientY)
-      const annotation = createAnnotation({ src, source, selectors, x, y })
-      overlay.render(annotation)
+      let annotation
+      try {
+        const { selectors, x, y } = describe(element, clientX, clientY)
+        annotation = createAnnotation({ src, source, selectors, x, y })
+        overlay.render(annotation)
+      } catch (error) {
+        warn('could not place sticker', error)
+        if (annotation) overlay.unrender(annotation.id)
+        return
+      }
       try {
         await storage.add(annotation)
       } catch (error) {
@@ -74,9 +89,9 @@ export default function StickerPack(options = {}) {
     destroyed = true
     tray.destroy()
     overlay.destroy()
-    if (active === destroy) active = null
+    if (globalThis[ACTIVE] === destroy) globalThis[ACTIVE] = null
   }
 
-  active = destroy
+  globalThis[ACTIVE] = destroy
   return destroy
 }
