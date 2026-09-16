@@ -96,14 +96,17 @@ export const createOverlay = () => {
   const resolveOrphans = () => {
     timer = 0
     if (destroyed) return
-    for (const entry of entries.values()) if (!entry.element) attach(entry)
+    for (const entry of entries.values()) {
+      if (entry.element && !entry.element.isConnected) detach(entry)
+      if (!entry.element) attach(entry)
+    }
     schedule()
   }
 
   const mutationObserver = new MutationObserver((records) => {
     if (!destroyed && !host.isConnected) document.body.append(host)
     schedule()
-    const hasOrphan = Array.from(entries.values()).some((entry) => !entry.element)
+    const hasOrphan = Array.from(entries.values()).some((entry) => !entry.element?.isConnected)
     const hasContentChange = records.some((record) => record.type === 'characterData' || record.addedNodes.length > 0)
     if (hasOrphan && hasContentChange) {
       clearTimeout(timer)

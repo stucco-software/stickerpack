@@ -306,8 +306,8 @@ Tap a sticker in the tray, then tap the page. There is no following ghost.
   - `document.fonts.ready`
   - a `ResizeObserver` on `document.documentElement`, on `document.body` and on each anchor element
   - a capture-phase `load` listener on `document` (catches lazy images/iframes finishing load anywhere on the page after render; capture phase is required because `load` does not bubble)
-- **Removed anchors:** on each reposition pass, a rendered sticker whose anchor is no longer connected (`!element.isConnected`) is unrendered and becomes orphaned.
-- **Late content:** a `MutationObserver` on `body` (subtree, childList, characterData) always schedules a reposition, but only re-runs `resolve` for orphaned stickers (debounced to 250ms) when there is at least one orphan and a mutation record adds nodes or changes character data; removal-only mutations reschedule a reposition but skip the orphan scan. It ignores mutations inside the overlay host.
+- **Removed anchors:** on each reposition pass, a rendered sticker whose anchor is no longer connected (`!element.isConnected`) is unrendered and becomes orphaned. An entry counts as orphaned as soon as its anchor is missing or disconnected — not only once the reposition pass has detached it — so a framework that replaces an anchor with an equivalent node within a single mutation batch is still detected as orphaned immediately, before that anchor reference is nulled out.
+- **Late content:** a `MutationObserver` on `body` (subtree, childList, characterData) always schedules a reposition, but only re-runs `resolve` for orphaned stickers (debounced to 250ms) when there is at least one orphan (anchor missing or disconnected) and a mutation record adds nodes or changes character data; removal-only mutations reschedule a reposition but skip the orphan scan. It ignores mutations inside the overlay host.
 - **Removed host:** the same `MutationObserver` callback re-appends the overlay host to `body` if something else removes it from the page.
 
 ## Error Handling

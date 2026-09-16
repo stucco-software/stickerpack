@@ -149,3 +149,15 @@ it('re-appends the host if something removes it from the page', async () => {
   await wait(0)
   expect(document.body.contains(overlay.host)).toBe(true)
 })
+
+it('re-resolves a sticker whose anchor was replaced with an equivalent node', async () => {
+  overlay.render(annotationAt('body > p:nth-child(1)'))
+  expect(stickers()).toHaveLength(1)
+  const p = document.querySelector('p')
+  const replacement = document.createElement('p')
+  replacement.textContent = p.textContent
+  p.replaceWith(replacement)
+  await wait(400)
+  await nextFrame()
+  expect(stickers()).toHaveLength(1)
+})
