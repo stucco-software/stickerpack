@@ -1,17 +1,39 @@
+:root {
+  --ink: #221e2b;
+  --paper: #fbf5e9;
+  --paper-dark: #efe6d3;
+  --line: #d9ccb4;
+  --shadow: #221e2b33;
+  --tomato: #ff5a36;
+  --sun: #ffc83d;
+  --sky: #4f8cff;
+  --mint: #5fd39a;
+  --grape: #9b6bff;
+}
+
 html {
-  font-family: "Degular";
+  font-family: "Degular", sans-serif;
   font-weight: 300;
+  color: var(--ink);
+  background-color: var(--paper);
+  /* Dot-grid sticker book paper */
+  background-image: radial-gradient(var(--line) 1.2px, transparent 1.2px);
+  background-size: 22px 22px;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: "Basteleur";
+  font-family: "Basteleur", serif;
   font-weight: 600;
 }
 
-mark {
-  font-family: "Basteleur";
-  font-weight: 600;
-  padding: 1rem;
-  display: inline-block;
-  border-radius: 50%;
+a {
+  color: inherit;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.2em;
+  text-decoration-color: var(--tomato);
+}
+
+::selection {
+  background: var(--sun);
+  color: var(--ink);
 }

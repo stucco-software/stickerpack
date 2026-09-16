@@ -1,74 +1,500 @@
 <script>
   import { onMount } from 'svelte'
   import { dev } from '$app/environment'
-  import StickerPack from '$lib/index.js'
+  import StickerPack, { localStorageAdapter } from '$lib/index.js'
+  import CodeBlock from './CodeBlock.svelte'
+  import { watchedStorage } from './watched-storage.js'
+  import watchedStorageSource from './watched-storage.js?raw'
+  import * as snippets from './snippets.js'
 
-  // The default pack is served from stickers.stucco.software. Until that
-  // domain is live, use the local copy in dev so stickers render.
-  const options = dev
-    ? { defaultPack: false, stickers: ['/stickers/eyes.png'] }
-    : {}
+  let stickers = $state([])
+  let mounted = $state(false)
 
-  onMount(() => StickerPack(options))
+  const latest = $derived(stickers.at(-1))
+  const count = $derived(`${stickers.length} ${stickers.length === 1 ? 'sticker' : 'stickers'}`)
+
+  onMount(() => {
+    mounted = true
+    return StickerPack({
+      // The default pack is served from stickers.stucco.software. Until that
+      // domain is live, use the local copy in dev so stickers render.
+      ...(dev ? { defaultPack: false, stickers: ['/stickers/eyes.png'] } : {}),
+      storage: watchedStorage(localStorageAdapter(), (list) => { stickers = list })
+    })
+  })
+
+  const htmlAttributes = [
+    ['stickers', 'Space-separated image URLs to add to the pack. Relative URLs are resolved against the page.'],
+    ['no-default-pack', 'Only offer your own stickers.'],
+    ['slot="trigger"', 'Put this on a child element to use it instead of the ✦ button.']
+  ]
+
+  const jsOptions = [
+    ['stickers', 'string[]', '[]', 'Image URLs to add to the pack.'],
+    ['defaultPack', 'boolean', 'true', 'Include the Stucco default pack.'],
+    ['storage', 'adapter', 'localStorageAdapter()', 'Where stickers are saved. See below.'],
+    ['trigger', 'Element', 'the ✦ button', 'Your own button to open the tray.']
+  ]
+
+  const steps = [
+    ['Open', 'Hit the ✦ button to open the sticker tray.'],
+    ['Pick', 'Choose a sticker. It follows your cursor.'],
+    ['Stick', 'Click anywhere on the page. Links won’t fire. Esc cancels.'],
+    ['Peel', 'With the tray open, click a sticker to peel it off.']
+  ]
 </script>
 
+<svelte:head>
+  <title>Stickerpack: stickers, for websites</title>
+  <meta name="description" content="Let visitors put stickers on your website. Two lines of HTML or one function call.">
+</svelte:head>
+
 <main>
+  <header class="hero">
+    <p class="eyebrow">stickerpack <span>v0.0.1</span></p>
+    <h1>Stickers, <em>for</em> Websites</h1>
+    <p class="lead">
+      Only the finest stickers, for your website. Add two lines of HTML or call one function, and folks can stick stuff all over your pages. The stickers stay put when they come back.
+    </p>
 
-  <h1>
-    Stickers, for Websites
-  </h1>
+    <ul class="badges" aria-hidden="true">
+      <li class="badge tomato">Easy!</li>
+      <li class="badge sun">Fun!</li>
+      <li class="badge sky">Wow!</li>
+    </ul>
 
-  <p>
-    Only the finest stickers, for your website. Just add HTML or use the JavaScript API to let folks stick stuff to your page.
-  </p>
+    <aside class="try">
+      <strong>Go on, try it.</strong>
+      Hit <span class="key">✦</span> in the corner, pick a sticker and stick it anywhere on this page. Then reload.
+      {#if mounted}
+        <span class="count">{count} stuck here so far.</span>
+      {/if}
+    </aside>
 
-  <mark>Easy!</mark>
+    <nav aria-label="Contents">
+      <ul>
+        <li><a href="#html">HTML</a></li>
+        <li><a href="#javascript">JavaScript</a></li>
+        <li><a href="#sticking">Sticking</a></li>
+        <li><a href="#storage">Storage</a></li>
+        <li><a href="#stickers">Sticker data</a></li>
+        <li><a href="#anchoring">How it sticks</a></li>
+      </ul>
+    </nav>
+  </header>
 
-  <h2>
-    Use Some HTML
-  </h2>
+  <section id="html">
+    <h2><span class="number">01</span> Use some HTML</h2>
+    <p>Two lines. Load the script and drop in the custom element.</p>
+    <CodeBlock code={snippets.htmlQuickStart} language="html" label="index.html" tape="var(--tomato)" />
 
-  <p>Two lines of HTML to add the Sticker Pack Custom Element!</p>
+    <h3>Attributes</h3>
+    <dl class="reference">
+      {#each htmlAttributes as [name, description]}
+        <div>
+          <dt><code>{name}</code></dt>
+          <dd>{description}</dd>
+        </div>
+      {/each}
+    </dl>
+    <CodeBlock code={snippets.htmlOptions} language="html" label="with options" tape="var(--sky)" />
+  </section>
 
-  <pre><code>
-    &lt;script type="module" src="stickerpack.js">&lt;/script>
-    &lt;sticker-pack>&lt;/sticker-pack>
-  </code></pre>
+  <section id="javascript">
+    <h2><span class="number">02</span> Use some JavaScripts</h2>
+    <p>So you sling some code? Make stickers happen where, when, and how you want.</p>
+    <CodeBlock code={snippets.jsQuickStart} label="main.js" tape="var(--mint)" />
 
-  <mark>Fun!</mark>
+    <h3>Options</h3>
+    <dl class="reference">
+      {#each jsOptions as [name, type, fallback, description]}
+        <div>
+          <dt><code>{name}</code> <span class="type">{type}</span></dt>
+          <dd>{description} <span class="default">Default: <code>{fallback}</code></span></dd>
+        </div>
+      {/each}
+    </dl>
+    <CodeBlock code={snippets.jsOptions} label="all the options" tape="var(--grape)" />
 
-  <h2>
-    Use Some JavaScripts
-  </h2>
+    <p class="note">
+      One sticker pack per page. Calling <code>StickerPack()</code> again warns and hands back a no-op.
+    </p>
+    <CodeBlock code={snippets.svelte} label="svelte" tape="var(--tomato)" />
+  </section>
 
-  <p>So you sling some code? Make stickers happen where, when, and how you want.</p>
+  <section id="sticking">
+    <h2><span class="number">03</span> Stick stuff</h2>
+    <p>What your visitors do:</p>
+    <ol class="steps">
+      {#each steps as [title, description], index}
+        <li style:--turn={`${index % 2 ? 2 : -2}deg`}>
+          <strong>{title}</strong>
+          <span>{description}</span>
+        </li>
+      {/each}
+    </ol>
+  </section>
 
-  <pre><code>
-    // import the library
-    import StickerPack from "stickerpack"
+  <section id="storage">
+    <h2><span class="number">04</span> Keep them somewhere</h2>
+    <p>
+      By default stickers live in the visitor’s browser, in <code>localStorage</code> under <code>stickerpack:&lt;page URL&gt;</code>. Want them somewhere else? Pass any object with these three methods.
+    </p>
+    <CodeBlock code={snippets.storageInterface} label="storage adapter" tape="var(--sun)" />
+    <p>
+      This very page wraps the default adapter so it can show you your stickers below. Here’s the whole thing:
+    </p>
+    <CodeBlock code={watchedStorageSource} label="watched-storage.js (running on this page)" tape="var(--sky)" />
+  </section>
 
-    // mount to the DOM
-    let destroyStickerPack = StickerPack()
+  <section id="stickers">
+    <h2><span class="number">05</span> What a sticker is</h2>
+    <p>
+      Every sticker is a <a href="https://www.w3.org/TR/annotation-model/">W3C Web Annotation</a>. The <code>body</code> is the sticker image URL. The <code>target</code> says which page it’s on and where.
+    </p>
+    {#if latest}
+      <p class="live"><span class="dot"></span> Live: the last of the {count} you’ve stuck on this page.</p>
+      <CodeBlock code={JSON.stringify(latest, null, 2)} language="json" label="your sticker" tape="var(--mint)" />
+    {:else}
+      <p class="live idle">Stick something and it shows up here. Until then, here’s an example:</p>
+      <CodeBlock code={snippets.exampleSticker} language="json" label="example sticker" tape="var(--grape)" />
+    {/if}
+  </section>
 
-    // remove from the DOM
-    destroyStickerPack()
-  </code></pre>
+  <section id="anchoring">
+    <h2><span class="number">06</span> How it sticks</h2>
+    <ul class="how">
+      <li>
+        <strong>Where you clicked.</strong>
+        A CSS path to the element under your cursor, and how far across and down it you clicked, in percent. Resize the window and stickers stay on their element.
+      </li>
+      <li>
+        <strong>What it says.</strong>
+        The first few words of that element’s text. If the page changes and the path breaks, the sticker finds its text again.
+      </li>
+      <li>
+        <strong>Patience.</strong>
+        If neither matches, the sticker waits in storage and comes back when its content does.
+      </li>
+      <li>
+        <strong>Hands off.</strong>
+        Stickers draw in their own Shadow DOM layer. Your markup and CSS are never touched.
+      </li>
+    </ul>
+  </section>
 
-  <mark>Wow!</mark>
-
-  <p>
-    From <a href="https://stucco.software">Stucco Software</a>
-  </p>
+  <footer>
+    <p>
+      Made with glue by <a href="https://stucco.software">Stucco Software</a>.
+      Stickers everyone can see, and stickers you can take anywhere, are coming next.
+    </p>
+  </footer>
 </main>
+
+{#if mounted && stickers.length === 0}
+  <p class="nudge" aria-hidden="true">stick something <span>→</span></p>
+{/if}
 
 <style>
   main {
-    max-width: 42rem;
+    max-width: 46rem;
     margin: auto;
+    padding: 3rem 1.25rem 6rem;
   }
-  h1,
-  h2,
+
+  section {
+    padding-block: 3rem 1rem;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(3rem, 11vw, 6rem);
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+  }
+
+  h1 em {
+    font-weight: 400;
+    font-style: normal;
+    color: var(--tomato);
+  }
+
+  h2 {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    font-size: clamp(2rem, 6vw, 2.75rem);
+  }
+
+  h3 {
+    margin-top: 2.5rem;
+    font-family: 'Degular', sans-serif;
+    font-weight: 500;
+    font-size: 0.9rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
   p {
-    padding-block: 1rem;
+    font-size: 1.2rem;
+  }
+
+  code {
+    padding: 0.05em 0.35em;
+    border-radius: 0.3em;
+    background: var(--paper-dark);
+    font: 0.85em ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  }
+
+  .eyebrow {
+    display: inline-block;
+    margin: 0 0 1rem;
+    padding: 0.2rem 0.8rem;
+    border: 2px solid var(--ink);
+    border-radius: 99rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .eyebrow span {
+    opacity: 0.6;
+  }
+
+  .lead {
+    max-width: 36rem;
+    font-size: 1.4rem;
+  }
+
+  .badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin: 2rem 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .badge {
+    padding: 0.9rem 1.2rem;
+    border-radius: 50%;
+    font-family: 'Basteleur', serif;
+    font-weight: 600;
+    font-size: 1.5rem;
+    box-shadow: 0 0 0 5px #fff, 4px 6px 0 5px var(--shadow);
+  }
+
+  .badge:nth-child(1) { transform: rotate(-8deg); }
+  .badge:nth-child(2) { transform: rotate(5deg) translateY(0.5rem); }
+  .badge:nth-child(3) { transform: rotate(-3deg); }
+
+  .tomato { background: var(--tomato); color: #fff; }
+  .sun { background: var(--sun); color: var(--ink); }
+  .sky { background: var(--sky); color: #fff; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .badge {
+      transition: transform 0.2s cubic-bezier(0.3, 1.8, 0.6, 1);
+    }
+    .badge:hover {
+      transform: rotate(0deg) scale(1.1);
+    }
+  }
+
+  .try {
+    margin: 2.5rem 0 2rem;
+    padding: 1.25rem 1.5rem;
+    border: 2px dashed var(--ink);
+    border-radius: 1rem;
+    background: #fff8;
+    font-size: 1.15rem;
+  }
+
+  .try strong {
+    display: block;
+    font-family: 'Basteleur', serif;
+    font-size: 1.5rem;
+  }
+
+  .key {
+    display: inline-grid;
+    place-items: center;
+    width: 1.8rem;
+    height: 1.8rem;
+    border-radius: 50%;
+    background: #111;
+    color: #fff;
+    font-size: 0.9rem;
+    vertical-align: middle;
+  }
+
+  .count {
+    display: block;
+    margin-top: 0.5rem;
+    font-style: italic;
+  }
+
+  nav ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  nav a {
+    display: block;
+    padding: 0.35rem 0.9rem;
+    border: 2px solid var(--ink);
+    border-radius: 99rem;
+    background: var(--paper);
+    font-weight: 500;
+    text-decoration: none;
+  }
+
+  nav a:hover,
+  nav a:focus-visible {
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  .number {
+    font-family: 'Degular', sans-serif;
+    font-weight: 500;
+    font-size: 1rem;
+    color: var(--tomato);
+  }
+
+  .reference {
+    margin: 0;
+    border-top: 2px solid var(--ink);
+  }
+
+  .reference div {
+    display: grid;
+    grid-template-columns: minmax(10rem, 1fr) 2fr;
+    gap: 0.25rem 1.5rem;
+    padding: 0.9rem 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  @media (max-width: 36rem) {
+    .reference div {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .reference dd {
+    margin: 0;
+  }
+
+  .type,
+  .default {
+    display: block;
+    font-size: 0.9rem;
+    opacity: 0.7;
+  }
+
+  .note {
+    padding-left: 1rem;
+    border-left: 4px solid var(--sun);
+  }
+
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+    gap: 1.25rem;
+    padding: 0;
+    list-style: none;
+    counter-reset: step;
+  }
+
+  .steps li {
+    padding: 1.25rem;
+    border: 2px solid var(--ink);
+    border-radius: 1rem;
+    background: #fff;
+    box-shadow: 4px 4px 0 var(--shadow);
+    transform: rotate(var(--turn));
+    counter-increment: step;
+  }
+
+  .steps strong {
+    display: block;
+    font-family: 'Basteleur', serif;
+    font-size: 1.6rem;
+  }
+
+  .steps strong::before {
+    content: counter(step) '. ';
+    color: var(--tomato);
+  }
+
+  .how {
+    display: grid;
+    gap: 1.25rem;
+    padding: 0;
+    list-style: none;
+    font-size: 1.15rem;
+  }
+
+  .how strong {
+    display: block;
+    font-weight: 500;
+  }
+
+  .live {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-weight: 500;
+  }
+
+  .live.idle {
+    font-weight: 300;
+  }
+
+  .dot {
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 50%;
+    background: var(--mint);
+    box-shadow: 0 0 0 4px #5fd39a44;
+  }
+
+  footer {
+    margin-top: 4rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid var(--ink);
+  }
+
+  footer p {
+    font-size: 1rem;
+  }
+
+  .nudge {
+    position: fixed;
+    right: 4.75rem;
+    bottom: 1.6rem;
+    margin: 0;
+    padding: 0.3rem 0.8rem;
+    border-radius: 99rem;
+    background: var(--sun);
+    font-family: 'Basteleur', serif;
+    font-size: 1rem;
+    box-shadow: 3px 3px 0 var(--shadow);
+    pointer-events: none;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .nudge span {
+      display: inline-block;
+      animation: poke 1s ease-in-out infinite;
+    }
+  }
+
+  @keyframes poke {
+    50% { transform: translateX(0.3rem); }
   }
 </style>
