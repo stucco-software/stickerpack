@@ -54,7 +54,7 @@
   <header class="hero">
     <p class="eyebrow">stickerpack <span>v0.0.1</span></p>
     <div class="title">
-      <h1>Stickers, <em>for</em> Websites</h1>
+      <h1>Stickers for Websites</h1>
       <ul class="badges" aria-hidden="true">
         <li class="badge tomato">Easy!</li>
         <li class="badge sun">Fun!</li>
@@ -216,13 +216,10 @@
 
   h1 {
     margin: 0;
-    font-size: clamp(3.25rem, 11vw, 5.4rem);
+    font-size: clamp(3.5rem, 12vw, 6rem);
     font-weight: 600;
     line-height: 0.95;
-    letter-spacing: 0.01em;
-    /* Basteleur tops out at Bold, so a stroke under the fill fattens it up. */
-    -webkit-text-stroke: 0.07em currentColor;
-    paint-order: stroke fill;
+    letter-spacing: -0.01em;
   }
 
   h1 em {
