@@ -68,7 +68,6 @@
 
     <p class="download">
       <a href="/stickerpack.js" download>Download stickerpack.js</a>
-      <span>One file, about 16 KB, no dependencies.</span>
     </p>
 
     <aside class="try">
@@ -84,9 +83,9 @@
         <li><a href="#html">HTML</a></li>
         <li><a href="#javascript">JavaScript</a></li>
         <li><a href="#sticking">Sticking</a></li>
-        <li><a href="#storage">Storage</a></li>
+        <!-- <li><a href="#storage">Storage</a></li>
         <li><a href="#stickers">Sticker data</a></li>
-        <li><a href="#anchoring">How it sticks</a></li>
+        <li><a href="#anchoring">How it sticks</a></li> -->
       </ul>
     </nav>
   </header>
@@ -128,7 +127,7 @@
     <CodeBlock code={snippets.jsOptions} label="all the options" />
 
     <p class="note">
-      One sticker pack per page. Calling <code>StickerPack()</code> again warns and hands back a no-op.
+      One sticker pack per page. Don't get greedy!
     </p>
     <CodeBlock code={snippets.svelte} label="svelte" />
   </section>
@@ -146,7 +145,7 @@
     </ol>
   </section>
 
-  <section id="storage">
+  <!-- <section id="storage">
     <h2>Keep them somewhere</h2>
     <p>
       By default stickers live in the visitor’s browser, in <code>localStorage</code> under <code>stickerpack:&lt;page URL&gt;</code>. Want them somewhere else? Pass any object with these three methods.
@@ -192,12 +191,11 @@
         Stickers draw in their own Shadow DOM layer. Your markup and CSS are never touched.
       </li>
     </ul>
-  </section>
+  </section> -->
 
   <footer>
     <p>
-      Made with glue by <a href="https://stucco.software">Stucco Software</a>.
-      Stickers everyone can see, and stickers you can take anywhere, are coming next.
+      Made with specially formulated HTML adhesives by <a href="https://stucco.software">Stucco Software</a>.
     </p>
   </footer>
 </main>
