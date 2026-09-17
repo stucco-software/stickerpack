@@ -2,8 +2,8 @@
 	"name": "stickerpack",
 	"version": "0.0.1",
 	"scripts": {
-		"dev": "vite dev",
-		"build": "vite build",
+		"dev": "npm run build:lib && vite dev",
+		"build": "npm run build:lib && vite build",
 		"build:lib": "vite build -c vite.lib.config.js && vite build -c vite.script.config.js",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo \"\"",

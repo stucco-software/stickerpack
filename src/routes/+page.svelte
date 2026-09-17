@@ -66,6 +66,11 @@
       Only the finest stickers, for your website. Add two lines of HTML or call one function, and folks can stick stuff all over your pages. The stickers stay put when they come back.
     </p>
 
+    <p class="download">
+      <a href="/stickerpack.js" download>Download stickerpack.js</a>
+      <span>One file, about 16 KB, no dependencies.</span>
+    </p>
+
     <aside class="try">
       <strong>Go on, try it.</strong>
       Hit <span class="key">✦</span> in the corner, pick a sticker and stick it anywhere on this page. Then reload.
@@ -87,9 +92,12 @@
   </header>
 
   <section id="html">
-    <h2><span class="number">01</span> Use some HTML</h2>
+    <h2>Use some HTML</h2>
     <p>Two lines. Load the script and drop in the custom element.</p>
     <CodeBlock code={snippets.htmlQuickStart} language="html" label="index.html" />
+    <p class="aside">
+      Rather host it yourself? <a href="/stickerpack.js" download>Download stickerpack.js</a> and point the <code>src</code> at your copy.
+    </p>
 
     <h3>Attributes</h3>
     <dl class="reference">
@@ -104,7 +112,7 @@
   </section>
 
   <section id="javascript">
-    <h2><span class="number">02</span> Use some JavaScripts</h2>
+    <h2>Use some JavaScripts</h2>
     <p>So you sling some code? Make stickers happen where, when, and how you want.</p>
     <CodeBlock code={snippets.jsQuickStart} label="main.js" />
 
@@ -126,7 +134,7 @@
   </section>
 
   <section id="sticking">
-    <h2><span class="number">03</span> Stick stuff</h2>
+    <h2>Stick stuff</h2>
     <p>What your visitors do:</p>
     <ol class="steps">
       {#each steps as [title, description], index}
@@ -139,7 +147,7 @@
   </section>
 
   <section id="storage">
-    <h2><span class="number">04</span> Keep them somewhere</h2>
+    <h2>Keep them somewhere</h2>
     <p>
       By default stickers live in the visitor’s browser, in <code>localStorage</code> under <code>stickerpack:&lt;page URL&gt;</code>. Want them somewhere else? Pass any object with these three methods.
     </p>
@@ -151,7 +159,7 @@
   </section>
 
   <section id="stickers">
-    <h2><span class="number">05</span> What a sticker is</h2>
+    <h2>What a sticker is</h2>
     <p>
       Every sticker is a <a href="https://www.w3.org/TR/annotation-model/">W3C Web Annotation</a>. The <code>body</code> is the sticker image URL. The <code>target</code> says which page it’s on and where.
     </p>
@@ -165,7 +173,7 @@
   </section>
 
   <section id="anchoring">
-    <h2><span class="number">06</span> How it sticks</h2>
+    <h2>How it sticks</h2>
     <ul class="how">
       <li>
         <strong>Where you clicked.</strong>
@@ -308,6 +316,39 @@
     .badge:hover {
       transform: rotate(0deg) scale(1.1);
     }
+  }
+
+  .download {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 1rem;
+    margin: 2rem 0 0;
+  }
+
+  .download a {
+    padding: 0.7rem 1.4rem;
+    border-radius: 99rem;
+    background: var(--ink);
+    color: var(--paper);
+    font-weight: 500;
+    text-decoration: none;
+    box-shadow: 4px 4px 0 var(--tomato);
+  }
+
+  .download a:hover,
+  .download a:focus-visible {
+    background: var(--tomato);
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+
+  .download span {
+    font-size: 1rem;
+    opacity: 0.75;
+  }
+
+  .aside {
+    font-size: 1.05rem;
   }
 
   .try {

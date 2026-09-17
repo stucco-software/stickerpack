@@ -1,7 +1,7 @@
 // Code samples shown on the docs page.
 
 export const htmlQuickStart = `
-<script type="module" src="stickerpack.js"></script>
+<script type="module" src="https://stickerpack.stucco.software/stickerpack.js"></script>
 <sticker-pack></sticker-pack>
 `
 
