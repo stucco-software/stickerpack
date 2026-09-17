@@ -20,7 +20,7 @@ const refinedBy = {
 }
 
 const make = (overrides = {}) => createAnnotation({
-  src: 'https://stickers.stucco.software/eyes.png',
+  src: 'https://stickerpack.stucco.software/stickers/eyes.png',
   source: 'https://example.com/about',
   selectors,
   x: 42.5,
@@ -67,7 +67,7 @@ describe('createAnnotation', () => {
       type: 'Annotation',
       motivation: 'tagging',
       created: '2026-09-16T18:04:00.000Z',
-      body: { id: 'https://stickers.stucco.software/eyes.png', type: 'Image' },
+      body: { id: 'https://stickerpack.stucco.software/stickers/eyes.png', type: 'Image' },
       target: {
         source: 'https://example.com/about',
         selector: [

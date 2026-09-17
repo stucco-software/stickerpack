@@ -2,6 +2,7 @@
   import { onMount } from 'svelte'
   import { dev } from '$app/environment'
   import StickerPack, { localStorageAdapter } from '$lib/index.js'
+  import { defaultPack } from '$lib/pack.js'
   import CodeBlock from './CodeBlock.svelte'
   import { watchedStorage } from './watched-storage.js'
   import watchedStorageSource from './watched-storage.js?raw'
@@ -16,9 +17,9 @@
   onMount(() => {
     mounted = true
     return StickerPack({
-      // The default pack is served from stickers.stucco.software. Until that
-      // domain is live, use the local copy in dev so stickers render.
-      ...(dev ? { defaultPack: false, stickers: ['/stickers/eyes.png'] } : {}),
+      // The default pack lives in static/stickers/ on this site. In dev, serve
+      // it from the dev server instead of stickerpack.stucco.software.
+      ...(dev ? { defaultPack: false, stickers: defaultPack.map(({ src }) => new URL(src).pathname) } : {}),
       storage: watchedStorage(localStorageAdapter(), (list) => { stickers = list })
     })
   })

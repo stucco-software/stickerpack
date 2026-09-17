@@ -1,7 +1,7 @@
 import { it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { createTray } from './tray.js'
 
-const stickers = [{ src: 'https://stickers.stucco.software/eyes.png', alt: 'Googly eyes' }]
+const stickers = [{ src: 'https://stickerpack.stucco.software/stickers/eyes.png', alt: 'Googly eyes' }]
 
 let host, root, tray, calls
 

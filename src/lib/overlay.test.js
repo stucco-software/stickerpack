@@ -2,7 +2,7 @@ import { it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { createOverlay } from './overlay.js'
 import { createAnnotation } from './annotation.js'
 
-const SRC = 'https://stickers.stucco.software/eyes.png'
+const SRC = 'https://stickerpack.stucco.software/stickers/eyes.png'
 
 const annotationAt = (value) => createAnnotation({
   src: SRC,

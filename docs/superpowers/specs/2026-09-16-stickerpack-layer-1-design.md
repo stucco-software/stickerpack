@@ -21,7 +21,7 @@ Layer 1 must not block layers 2 and 3. Two decisions carry that weight:
 | Topic | Decision |
 |---|---|
 | Sticker sources | Default pack hosted at stable URLs, plus owner-supplied image URLs |
-| Default pack host | Dedicated domain, `stickers.stucco.software` (placeholder, confirm before launch) |
+| Default pack host | The stickerpack site itself: `stickerpack.stucco.software/stickers`, served from this repo's `static/stickers/` |
 | Persistence | Pluggable storage adapter; localStorage adapter is the default |
 | Placing | Floating pack button → tray → sticker follows pointer → click to stick |
 | After placing | Visitors can peel off their own stickers. No move, rotate or resize |
@@ -40,8 +40,8 @@ Each module is usable and testable on its own. Modules communicate through the i
 #### `pack.js`
 
 ```js
-export const PACK_ORIGIN = 'https://stickers.stucco.software'
-export const defaultPack // → [{ src: `${PACK_ORIGIN}/eyes.png`, alt: 'Googly eyes' }, …]
+export const PACK_URL = 'https://stickerpack.stucco.software/stickers'
+export const defaultPack // → [{ src: `${PACK_URL}/eyes.png`, alt: 'Googly eyes' }, …]
 ```
 
 #### `annotation.js`
@@ -189,7 +189,7 @@ A placed sticker is a Web Annotation:
   "type": "Annotation",
   "motivation": "tagging",
   "created": "2026-09-16T18:04:00Z",
-  "body": { "id": "https://stickers.stucco.software/eyes.png", "type": "Image" },
+  "body": { "id": "https://stickerpack.stucco.software/stickers/eyes.png", "type": "Image" },
   "target": {
     "source": "https://example.com/about",
     "selector": [
@@ -352,8 +352,9 @@ Tap a sticker in the tray, then tap the page. There is no following ghost.
 ## Default Pack Assets
 
 - Sticker images live in this repo under `static/stickers/`. `eyes.png` is the first; more art is added over time.
-- `stickers.stucco.software` must serve those files at stable paths (e.g. as an additional domain on the showcase deployment) before launch.
-- Until then, `PACK_ORIGIN` is the only thing to change, and the showcase will show broken default stickers if the domain isn't live.
+- The showcase site is deployed at `stickerpack.stucco.software`, so SvelteKit serves them at `https://stickerpack.stucco.software/stickers/<file>`. The project is self-contained: no separate asset host.
+- Published sticker paths must never change or be removed, because the URL is the sticker's identity.
+- In dev, the showcase maps the default pack to the dev server's `/stickers/` paths so stickers render before and without a deploy.
 
 ## Cleanup Included
 

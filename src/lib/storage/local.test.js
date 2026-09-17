@@ -3,7 +3,7 @@ import { localStorageAdapter } from './local.js'
 import { createAnnotation } from '../annotation.js'
 
 const sticker = (source) => createAnnotation({
-  src: 'https://stickers.stucco.software/eyes.png',
+  src: 'https://stickerpack.stucco.software/stickers/eyes.png',
   source,
   selectors: [{ type: 'CssSelector', value: 'body' }],
   x: 10,
