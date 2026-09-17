@@ -1,7 +1,7 @@
 <script>
   import { highlight } from './highlight.js'
 
-  let { code, language = 'js', label = language, tape = 'var(--sun)' } = $props()
+  let { code, language = 'js', label = language } = $props()
 
   let copied = $state(false)
   const html = $derived(highlight(code.trim(), language))
@@ -17,7 +17,7 @@
   }
 </script>
 
-<figure class="code" style:--tape={tape}>
+<figure class="code">
   <figcaption>
     <span class="label">{label}</span>
     <button type="button" onclick={copy}>{copied ? 'Copied!' : 'Copy'}</button>
@@ -27,26 +27,11 @@
 
 <style>
   .code {
-    position: relative;
     margin: 2rem 0;
     background: var(--ink);
     color: #f4efe6;
     border-radius: 0.9rem;
     box-shadow: 6px 6px 0 var(--shadow);
-  }
-
-  /* A strip of washi tape holding the snippet to the page. */
-  .code::before {
-    content: '';
-    position: absolute;
-    top: -0.8rem;
-    left: 50%;
-    width: 7rem;
-    height: 1.6rem;
-    background: var(--tape);
-    opacity: 0.85;
-    transform: translateX(-50%) rotate(-3deg);
-    clip-path: polygon(3% 0, 97% 4%, 100% 100%, 0 96%);
   }
 
   figcaption {

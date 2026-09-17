@@ -53,16 +53,18 @@
 <main>
   <header class="hero">
     <p class="eyebrow">stickerpack <span>v0.0.1</span></p>
-    <h1>Stickers, <em>for</em> Websites</h1>
+    <div class="title">
+      <h1>Stickers, <em>for</em> Websites</h1>
+      <ul class="badges" aria-hidden="true">
+        <li class="badge tomato">Easy!</li>
+        <li class="badge sun">Fun!</li>
+        <li class="badge sky">Wow!</li>
+      </ul>
+    </div>
+
     <p class="lead">
       Only the finest stickers, for your website. Add two lines of HTML or call one function, and folks can stick stuff all over your pages. The stickers stay put when they come back.
     </p>
-
-    <ul class="badges" aria-hidden="true">
-      <li class="badge tomato">Easy!</li>
-      <li class="badge sun">Fun!</li>
-      <li class="badge sky">Wow!</li>
-    </ul>
 
     <aside class="try">
       <strong>Go on, try it.</strong>
@@ -87,7 +89,7 @@
   <section id="html">
     <h2><span class="number">01</span> Use some HTML</h2>
     <p>Two lines. Load the script and drop in the custom element.</p>
-    <CodeBlock code={snippets.htmlQuickStart} language="html" label="index.html" tape="var(--tomato)" />
+    <CodeBlock code={snippets.htmlQuickStart} language="html" label="index.html" />
 
     <h3>Attributes</h3>
     <dl class="reference">
@@ -98,13 +100,13 @@
         </div>
       {/each}
     </dl>
-    <CodeBlock code={snippets.htmlOptions} language="html" label="with options" tape="var(--sky)" />
+    <CodeBlock code={snippets.htmlOptions} language="html" label="with options" />
   </section>
 
   <section id="javascript">
     <h2><span class="number">02</span> Use some JavaScripts</h2>
     <p>So you sling some code? Make stickers happen where, when, and how you want.</p>
-    <CodeBlock code={snippets.jsQuickStart} label="main.js" tape="var(--mint)" />
+    <CodeBlock code={snippets.jsQuickStart} label="main.js" />
 
     <h3>Options</h3>
     <dl class="reference">
@@ -115,12 +117,12 @@
         </div>
       {/each}
     </dl>
-    <CodeBlock code={snippets.jsOptions} label="all the options" tape="var(--grape)" />
+    <CodeBlock code={snippets.jsOptions} label="all the options" />
 
     <p class="note">
       One sticker pack per page. Calling <code>StickerPack()</code> again warns and hands back a no-op.
     </p>
-    <CodeBlock code={snippets.svelte} label="svelte" tape="var(--tomato)" />
+    <CodeBlock code={snippets.svelte} label="svelte" />
   </section>
 
   <section id="sticking">
@@ -141,11 +143,11 @@
     <p>
       By default stickers live in the visitor’s browser, in <code>localStorage</code> under <code>stickerpack:&lt;page URL&gt;</code>. Want them somewhere else? Pass any object with these three methods.
     </p>
-    <CodeBlock code={snippets.storageInterface} label="storage adapter" tape="var(--sun)" />
+    <CodeBlock code={snippets.storageInterface} label="storage adapter" />
     <p>
       This very page wraps the default adapter so it can show you your stickers below. Here’s the whole thing:
     </p>
-    <CodeBlock code={watchedStorageSource} label="watched-storage.js (running on this page)" tape="var(--sky)" />
+    <CodeBlock code={watchedStorageSource} label="watched-storage.js (running on this page)" />
   </section>
 
   <section id="stickers">
@@ -155,10 +157,10 @@
     </p>
     {#if latest}
       <p class="live"><span class="dot"></span> Live: the last of the {count} you’ve stuck on this page.</p>
-      <CodeBlock code={JSON.stringify(latest, null, 2)} language="json" label="your sticker" tape="var(--mint)" />
+      <CodeBlock code={JSON.stringify(latest, null, 2)} language="json" label="your sticker" />
     {:else}
       <p class="live idle">Stick something and it shows up here. Until then, here’s an example:</p>
-      <CodeBlock code={snippets.exampleSticker} language="json" label="example sticker" tape="var(--grape)" />
+      <CodeBlock code={snippets.exampleSticker} language="json" label="example sticker" />
     {/if}
   </section>
 
@@ -207,15 +209,23 @@
     padding-block: 3rem 1rem;
   }
 
+  .title {
+    position: relative;
+    margin: 2.5rem 0 3rem;
+  }
+
   h1 {
     margin: 0;
-    font-size: clamp(3rem, 11vw, 6rem);
+    font-size: clamp(3.25rem, 11vw, 5.4rem);
+    font-weight: 600;
     line-height: 0.95;
-    letter-spacing: -0.02em;
+    letter-spacing: 0.01em;
+    /* Basteleur tops out at Bold, so a stroke under the fill fattens it up. */
+    -webkit-text-stroke: 0.07em currentColor;
+    paint-order: stroke fill;
   }
 
   h1 em {
-    font-weight: 400;
     font-style: normal;
     color: var(--tomato);
   }
@@ -269,26 +279,26 @@
   }
 
   .badges {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1.5rem;
-    margin: 2rem 0;
+    margin: 0;
     padding: 0;
     list-style: none;
   }
 
   .badge {
+    position: absolute;
+    z-index: 1;
     padding: 0.9rem 1.2rem;
     border-radius: 50%;
     font-family: 'Basteleur', serif;
     font-weight: 600;
-    font-size: 1.5rem;
+    font-size: clamp(1.1rem, 3.2vw, 1.6rem);
     box-shadow: 0 0 0 5px #fff, 4px 6px 0 5px var(--shadow);
+    transform: rotate(var(--turn));
   }
 
-  .badge:nth-child(1) { transform: rotate(-8deg); }
-  .badge:nth-child(2) { transform: rotate(5deg) translateY(0.5rem); }
-  .badge:nth-child(3) { transform: rotate(-3deg); }
+  .badge:nth-child(1) { --turn: -14deg; top: -2.6rem; left: clamp(-2.5rem, -3vw, -0.5rem); }
+  .badge:nth-child(2) { --turn: 9deg; top: 38%; right: clamp(-1.5rem, -2vw, 0rem); }
+  .badge:nth-child(3) { --turn: -6deg; bottom: -2.25rem; left: 42%; }
 
   .tomato { background: var(--tomato); color: #fff; }
   .sun { background: var(--sun); color: var(--ink); }
