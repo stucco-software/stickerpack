@@ -28,7 +28,8 @@ const destroy = StickerPack({
   stickers: ['/stickers/duck.png'],     // added to the default pack
   defaultPack: true,                    // false = only your stickers
   storage: localStorageAdapter(),       // where stickers are saved
-  trigger: document.querySelector('#stickers') // your own button
+  trigger: document.querySelector('#stickers'), // your own button, or 'none'
+  resolveImage: (src) => src            // where sticker images load from
 })
 `
 

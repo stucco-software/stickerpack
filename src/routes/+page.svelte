@@ -34,7 +34,8 @@
     ['stickers', 'string[]', '[]', 'Image URLs to add to the pack.'],
     ['defaultPack', 'boolean', 'true', 'Include the Stucco default pack.'],
     ['storage', 'adapter', 'localStorageAdapter()', 'Where stickers are saved. See below.'],
-    ['trigger', 'Element', 'the ✦ button', 'Your own button to open the tray.']
+    ['trigger', 'Element | "none"', 'the ✦ button', 'Your own button to open the tray, or "none" to show no button.'],
+    ['resolveImage', 'function', 'src => src', 'Change where a sticker image loads from, without changing what the sticker is.']
   ]
 
   const steps = [
@@ -127,7 +128,8 @@
     <CodeBlock code={snippets.jsOptions} label="all the options" />
 
     <p class="note">
-      One sticker pack per page. Don't get greedy!
+      One sticker pack per page. Don't get greedy! The handle you get back is a function that unmounts,
+      and it carries <code>open()</code>, <code>close()</code> and <code>toggle()</code> so your own UI can drive the tray.
     </p>
     <CodeBlock code={snippets.svelte} label="svelte" />
   </section>
