@@ -116,3 +116,74 @@ it('destroy removes its elements and listeners', () => {
   expect(calls.onOpen).not.toHaveBeenCalled()
   expect(root.querySelector('.tray')).toBe(null)
 })
+
+it('renders no trigger at all with trigger: none', () => {
+  setup({ trigger: 'none' })
+  expect($('.trigger')).toBe(null)
+  expect($('.tray').hidden).toBe(true)
+  expect($('.tray').classList.contains('no-trigger')).toBe(true)
+})
+
+it('opens, closes and toggles without a trigger', () => {
+  setup({ trigger: 'none' })
+  tray.open()
+  expect($('.tray').hidden).toBe(false)
+  expect(calls.onOpen).toHaveBeenCalledTimes(1)
+  tray.toggle()
+  expect($('.tray').hidden).toBe(true)
+  tray.toggle()
+  expect($('.tray').hidden).toBe(false)
+  tray.close()
+  expect($('.tray').hidden).toBe(true)
+})
+
+it('places a sticker with no trigger and does not throw', () => {
+  setup({ trigger: 'none' })
+  const link = document.querySelector('a')
+  document.elementsFromPoint = vi.fn(() => [host, link, document.body])
+  tray.open()
+  $('.tray button').click()
+  clickCapture(5, 6)
+  expect(calls.onPlace).toHaveBeenCalledWith({ src: stickers[0].src, element: link, clientX: 5, clientY: 6 })
+})
+
+it('close() also cancels placing', () => {
+  setup()
+  $('.trigger').click()
+  $('.tray button').click()
+  expect($('.capture').hidden).toBe(false)
+  tray.close()
+  expect($('.capture').hidden).toBe(true)
+  expect($('.ghost').hidden).toBe(true)
+})
+
+it('open() while placing cancels placing first', () => {
+  setup()
+  $('.trigger').click()
+  $('.tray button').click()
+  tray.open()
+  expect($('.capture').hidden).toBe(true)
+  expect($('.tray').hidden).toBe(false)
+})
+
+it('ignores open, close and toggle after destroy', () => {
+  setup({ trigger: 'none' })
+  tray.destroy()
+  tray.open()
+  tray.toggle()
+  expect(root.querySelector('.tray')).toBe(null)
+})
+
+it('draws tray images through resolveImage without loading=lazy', () => {
+  setup({ resolveImage: (src) => `${src}?local` })
+  const img = $('.tray button img')
+  expect(img.getAttribute('src')).toBe(`${stickers[0].src}?local`)
+  expect(img.hasAttribute('loading')).toBe(false)
+})
+
+it('draws the ghost through resolveImage too', () => {
+  setup({ resolveImage: (src) => `${src}?local` })
+  $('.trigger').click()
+  $('.tray button').click()
+  expect($('.ghost').getAttribute('src')).toBe(`${stickers[0].src}?local`)
+})
