@@ -33,6 +33,7 @@ The spec's shapes hold, with these details pinned down:
 - `extensionStorage()` takes the storage area, so tests pass a fake; `stickerMap()` takes `getURL`, for the same reason.
 - The build is `scripts/build-extension.js` rather than the spec's `vite.extension.config.js`: Rollup can't code-split into IIFE, so each entry needs its own build, which a script drives more clearly than a config file.
 - `startContent` owns the "already running in this page" flag, so a revoke clears it and a re-grant can mount again.
+- The extension builds into `dist-extension/<target>/`, not `dist/`: `vite.lib.config.js` sets `emptyOutDir: true` on `dist`, so a library or site build would otherwise delete the extension you have loaded unpacked in a browser.
 
 ## File map
 
@@ -52,7 +53,8 @@ The spec's shapes hold, with these details pinned down:
 | `src/extension/options/options.{html,js}` | create | list granted sites, opt out |
 | `src/extension/manifest.js` | create | per-target manifest |
 | `src/extension/icons/` | create | 48px and 128px icons |
-| `scripts/build-extension.js` | create | four IIFE builds, copy assets, write manifests |
+| `scripts/build-extension.js` | create | four IIFE builds, copy assets, write manifests, into `dist-extension/` |
+| `.gitignore` | modify | ignore `dist-extension/` |
 | `package.json` | modify | `build:extension`, `dev:extension` |
 
 ---
@@ -442,16 +444,11 @@ git push
 
 - [ ] **Step 1: Add the options to the reference list**
 
-In the `jsOptions` array, after the `trigger` row:
+Replace the `trigger` row (currently the last entry, with no trailing comma) with both rows:
 
 ```js
+    ['trigger', 'Element | "none"', 'the ✦ button', 'Your own button to open the tray, or "none" to show no button.'],
     ['resolveImage', 'function', 'src => src', 'Change where a sticker image loads from, without changing what the sticker is.']
-```
-
-And change the `trigger` row's description to mention the new value:
-
-```js
-    ['trigger', 'Element | "none"', 'the ✦ button', 'Your own button to open the tray, or "none" to show no button.']
 ```
 
 - [ ] **Step 1b: Add it to the "all the options" snippet**
@@ -1812,7 +1809,9 @@ const bundle = async ({ entry, file }, outDir, watch) => build({
 })
 
 const buildTarget = async (target, watch) => {
-  const outDir = `dist/extension/${target}`
+  // Not under dist/: the library build empties that directory, which would delete
+  // an extension you have loaded unpacked in a browser.
+  const outDir = `dist-extension/${target}`
   await rm(outDir, { recursive: true, force: true })
   await mkdir(outDir, { recursive: true })
 
@@ -1828,6 +1827,10 @@ const buildTarget = async (target, watch) => {
 const watch = process.argv.includes('--watch')
 for (const target of TARGETS) await buildTarget(target, watch)
 ```
+
+- [ ] **Step 2b: Ignore the build output**
+
+Run: `printf '\n# built extension\n/dist-extension\n' >> .gitignore`
 
 - [ ] **Step 3: Add the npm scripts**
 
@@ -1845,19 +1848,22 @@ fs.writeFileSync("package.json", JSON.stringify(pkg, null, "\t") + "\n")
 
 - [ ] **Step 4: Build and inspect**
 
-Run: `npm run build:extension && ls dist/extension/chrome dist/extension/firefox`
+Run: `npm run build:extension && ls dist-extension/chrome dist-extension/firefox`
 Expected: each directory holds `manifest.json`, `background.js`, `content.js`, `popup.js`, `popup.html`, `options.js`, `options.html`, `ui.css`, `icons/`, `stickers/`.
 
-Run: `node -e "const m=require('./dist/extension/firefox/manifest.json'); console.log(m.background, m.browser_specific_settings.gecko.id)"`
+Run: `node -e "const m=require('./dist-extension/firefox/manifest.json'); console.log(m.background, m.browser_specific_settings.gecko.id)"`
 Expected: `{ scripts: [ 'background.js' ] } stickerpack@stucco.software`
 
-Run: `grep -qE "^(import|export) " dist/extension/chrome/content.js && echo "NOT self-contained" || echo "self-contained"`
+Run: `grep -qE "^(import|export) " dist-extension/chrome/content.js && echo "NOT self-contained" || echo "self-contained"`
 Expected: `self-contained` (an IIFE has no top-level imports or exports).
 
-Run: `node --check dist/extension/chrome/background.js && node --check dist/extension/chrome/content.js && echo "parses"`
+Run: `node --check dist-extension/chrome/background.js && node --check dist-extension/chrome/content.js && echo "parses"`
 Expected: `parses`.
 
-- [ ] **Step 5: Verify tests and the site build still pass**
+- [ ] **Step 5: Verify the site build leaves the extension alone**
+
+Run: `npm run build && ls dist-extension/chrome/manifest.json`
+Expected: the manifest is still there. (Before this task's `dist-extension` choice, a site build emptied `dist/` and took the extension with it.)
 
 Run: `npm test && npm run build`
 Expected: PASS, 142 total; build exits 0.
@@ -1865,7 +1871,7 @@ Expected: PASS, 142 total; build exits 0.
 - [ ] **Step 6: Commit and push**
 
 ```bash
-git add scripts/build-extension.js src/extension/icons package.json
+git add scripts/build-extension.js src/extension/icons package.json .gitignore
 git commit -m "build the extension for chrome and firefox
 
 Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>"
@@ -1883,17 +1889,17 @@ git push
 Run: `npm test && npm run build && npm run build:lib && npm run build:extension`
 Expected: all pass. Put the test summary line in the report.
 
-- [ ] **Step 2: Confirm `dist/` is not committed**
+- [ ] **Step 2: Confirm no build output is committed**
 
 Run: `git status --short`
-Expected: empty. `dist/` is already in `.gitignore`.
+Expected: nothing but this plan file, if you've been ticking its checkboxes. `dist/` and `dist-extension/` are both ignored.
 
 - [ ] **Step 3: Write the manual checklist into the final report**
 
 happy-dom has no extension runtime, so these have to be done by hand. List them for the user:
 
-**Chrome/Edge:** `chrome://extensions` → Developer mode → Load unpacked → `dist/extension/chrome`.
-**Firefox:** `about:debugging#/runtime/this-firefox` → Load Temporary Add-on → `dist/extension/firefox/manifest.json`.
+**Chrome/Edge:** `chrome://extensions` → Developer mode → Load unpacked → `dist-extension/chrome`.
+**Firefox:** `about:debugging#/runtime/this-firefox` → Load Temporary Add-on → `dist-extension/firefox/manifest.json`.
 
 1. On a fresh site, the toolbar button opens the popup offering to sticker the site.
 2. Saying yes prompts for permission, and the tray opens without reloading.
