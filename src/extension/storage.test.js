@@ -3,7 +3,7 @@ import { extensionStorage } from './storage.js'
 import { createAnnotation } from '../lib/annotation.js'
 
 const sticker = (source) => createAnnotation({
-  src: 'https://stickerpack.stucco.software/stickers/eyes.png',
+  src: 'https://stickerpack.stucco.software/stickers/eyes.svg',
   source,
   selectors: [{ type: 'CssSelector', value: 'body' }],
   x: 10,

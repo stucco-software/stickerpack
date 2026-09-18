@@ -37,7 +37,7 @@ it('re-exports the localStorage adapter', () => {
 
 it('mounts, loads this page’s stickers and unmounts', async () => {
   const saved = createAnnotation({
-    src: 'https://stickerpack.stucco.software/stickers/eyes.png',
+    src: 'https://stickerpack.stucco.software/stickers/eyes.svg',
     source: pageSource(),
     selectors: [{ type: 'CssSelector', value: 'body > p:nth-child(1)' }],
     x: 50,
@@ -107,7 +107,7 @@ it('unrenders a placed sticker when saving fails', async () => {
 
 it('peels a sticker while the tray is open', async () => {
   const saved = createAnnotation({
-    src: 'https://stickerpack.stucco.software/stickers/eyes.png',
+    src: 'https://stickerpack.stucco.software/stickers/eyes.svg',
     source: pageSource(),
     selectors: [{ type: 'CssSelector', value: 'body > p:nth-child(1)' }],
     x: 50,
@@ -176,7 +176,7 @@ it('skips owner sticker URLs that fail to parse', () => {
 it('re-renders a sticker when removing fails', async () => {
   const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
   const saved = createAnnotation({
-    src: 'https://stickerpack.stucco.software/stickers/eyes.png',
+    src: 'https://stickerpack.stucco.software/stickers/eyes.svg',
     source: pageSource(),
     selectors: [{ type: 'CssSelector', value: 'body > p:nth-child(1)' }],
     x: 50,
@@ -204,7 +204,7 @@ it('destroying immediately prevents a pending sticker list from rendering', asyn
   expect(() => stop()).not.toThrow()
   await vi.waitFor(() => expect(storage.list).toHaveBeenCalled())
   resolveList([createAnnotation({
-    src: 'https://stickerpack.stucco.software/stickers/eyes.png',
+    src: 'https://stickerpack.stucco.software/stickers/eyes.svg',
     source: pageSource(),
     selectors: [{ type: 'CssSelector', value: 'body > p:nth-child(1)' }],
     x: 50,

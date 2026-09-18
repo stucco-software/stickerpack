@@ -3,7 +3,7 @@
 export const PACK_URL = 'https://stickerpack.stucco.software/stickers'
 
 export const defaultPack = [
-  { src: `${PACK_URL}/eyes.png`, alt: 'Googly eyes' },
+  { src: `${PACK_URL}/eyes.svg`, alt: 'Googly eyes' },
   { src: `${PACK_URL}/star.svg`, alt: 'Star' },
   { src: `${PACK_URL}/arrow.svg`, alt: 'Arrow pointing up and left' },
   { src: `${PACK_URL}/no-entry.svg`, alt: 'No entry' },
