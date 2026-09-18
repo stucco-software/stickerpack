@@ -87,7 +87,7 @@ Clearing the popup is an optimisation, not a requirement: the popup handles the 
 2. The toolbar button opens the popup. The popup uses `activeTab` to read the current tab's URL.
 3. `stickerable(url)` is false → the popup says this page can't be stickered, and stops.
 4. Otherwise the popup shows "Stick stickers on this site". Its click handler calls `api.permissions.request({ origins: ['<origin>/*'] })` **as the first statement, before any `await`**, because the user gesture doesn't survive an await in either browser.
-5. On approval the background (via `permissions.onAdded`):
+5. On approval the background (via `permissions.onAdded`, which carries the granted origins but no tab, so it resolves the tab with `tabs.query({ active: true, lastFocusedWindow: true })` and only injects when that tab's origin matches the grant — a grant made through the browser's own site-access UI can fire while another tab is active):
    - registers a content script for that origin with the deterministic id `sp:<origin>` (`api.scripting.registerContentScripts`, `persistAcrossSessions: true`, `runAt: 'document_idle'`, `allFrames: false`), so reconciliation can diff registrations against `permissions.getAll()`,
    - injects it into the current tab with `api.scripting.executeScript`, so nothing needs reloading,
    - clears the popup for tabs on that origin.
@@ -114,6 +114,7 @@ Clearing the popup is an optimisation, not a requirement: the popup handles the 
 **Revoking a site**
 - "Stop stickering this site" calls `api.permissions.remove`. The background reacts to `permissions.onRemoved` and unregisters that origin's content script.
 - By then the grant is gone, so tab URLs are unreadable again and the background can't tell which tabs were on that site. It therefore **broadcasts** `{ type: 'teardown', origin }` to every tab id (`tabs.query({})` returns ids without any permission) and restores the popup on all of them. Each content script compares the origin with its own and ignores anything else; granted tabs get their popup cleared again on their next update.
+- Most tabs have no content script listening, so most of those messages reject. Those rejections are swallowed where they happen and never reach the inject-and-retry path, which belongs to toggling, not teardown.
 - `permissions.onAdded` and `permissions.onRemoved` are the source of truth, so grants and revokes made through the browser's own site-access UI are handled the same way.
 - `runtime.onInstalled` and `runtime.onStartup` reconcile registered scripts against `permissions.getAll()`, because registrations are cleared on extension update.
 - Stored stickers are kept. Granting again brings them back.
@@ -138,6 +139,7 @@ Unchanged from layer 1: one W3C Web Annotation per sticker.
 - **CSP:** extension URLs are the one image source exempt from a page's CSP in both engines. Chromium treats content-script injections as belonging to the isolated world and exempts `chrome-extension:`; Firefox applies page CSP to most content-script DOM loads (Bugzilla 1267027) but exempts the `moz-extension:` scheme itself.
 - **No blob or data fallback.** Firefox explicitly declined to exempt extension-origin blobs from CSP (Bugzilla 1294996, WONTFIX), and `blob:` is not covered by `img-src 'self'`, so a blob would be blocked exactly where an extension URL would be. If a sticker image somehow can't load, the library's existing `error` handler hides it and keeps the annotation.
 - Injected sticker images must not use `loading="lazy"`: a deferred load loses its isolated-world attribution in Chromium and gets blocked by page CSP (crbug 40818701). The library sets no `loading` attribute today; a test guards it.
+- Because `web_accessible_resources` matches `*://*/*` and the URL is static, any page can probe for the extension's id. That's the accepted trade: `matches` can't be narrowed at runtime, and a dynamic URL would break `runtime.getURL()`, which is the only CSP-exempt way to draw a sticker.
 - If a canonical URL has no bundled file at all, it's left as-is and loads over the network. This can only happen if the bundled pack and `defaultPack` fall out of step, and the build copies both from the same place to prevent it.
 - In the normal case nothing leaves the machine for sticker art, so the sticker host can't see which sites are being stickered, and it all works offline.
 
