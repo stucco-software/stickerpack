@@ -32,11 +32,15 @@ export const createBackground = (api) => {
       allFrames: false,
       persistAcrossSessions: true
     }
-    const existing = await api.scripting
-      .getRegisteredContentScripts({ ids: [script.id] })
-      .catch(() => [])
-    if (existing.length) await api.scripting.updateContentScripts([script])
-    else await api.scripting.registerContentScripts([script])
+    try {
+      const existing = await api.scripting
+        .getRegisteredContentScripts({ ids: [script.id] })
+        .catch(() => [])
+      if (existing.length) await api.scripting.updateContentScripts([script])
+      else await api.scripting.registerContentScripts([script])
+    } catch (error) {
+      console.warn('stickerpack: could not register', origin, error)
+    }
   }
 
   const unregister = (origin) =>
@@ -45,6 +49,7 @@ export const createBackground = (api) => {
   // `activeTab` makes a tab's url readable on a toolbar click even for sites that were
   // never opted into, so readability is never treated as proof of a grant.
   const toggle = async (tab) => {
+    if (!tab?.url) [tab] = await api.tabs.query({ active: true, lastFocusedWindow: true })
     const origin = originOf(tab?.url)
     if (!origin || !(await granted(origin))) {
       await api.action.openPopup?.().catch?.(() => {})
@@ -68,13 +73,17 @@ export const createBackground = (api) => {
   const onAdded = async ({ origins = [] }) => {
     for (const value of origins) {
       const origin = originOfPattern(value)
-      await register(origin)
-      // onAdded carries no tab, and a grant can also come from the browser's own UI.
-      const [tab] = await api.tabs.query({ active: true, lastFocusedWindow: true })
-      if (!tab || originOf(tab.url) !== origin) continue
-      await setPopup(tab.id, '')
-      await inject(tab.id)
-      await tell(tab.id, { type: 'toggle' })
+      try {
+        await register(origin)
+        // onAdded carries no tab, and a grant can also come from the browser's own UI.
+        const [tab] = await api.tabs.query({ active: true, lastFocusedWindow: true })
+        if (!tab || originOf(tab.url) !== origin) continue
+        await setPopup(tab.id, '')
+        await inject(tab.id)
+        await tell(tab.id, { type: 'toggle' })
+      } catch (error) {
+        console.warn('stickerpack: could not finish granting', origin, error)
+      }
     }
   }
 
@@ -86,7 +95,7 @@ export const createBackground = (api) => {
       // content script decide. Tabs with nothing listening reject, and that's fine.
       const tabs = await api.tabs.query({}).catch(() => [])
       for (const tab of tabs) {
-        await setPopup(tab.id, POPUP)
+        await refreshPopup(tab.id, tab.url)
         await tell(tab.id, { type: 'teardown', origin })
       }
     }
@@ -101,6 +110,8 @@ export const createBackground = (api) => {
     const stale = existing.filter((script) => !wantedIds.includes(script.id)).map((script) => script.id)
     if (stale.length) await api.scripting.unregisterContentScripts({ ids: stale }).catch(() => {})
     for (const origin of wanted) await register(origin)
+    // A restart can leave an already-open tab with the default popup even though it's granted.
+    for (const tab of await api.tabs.query({}).catch(() => [])) await refreshPopup(tab.id, tab.url)
   }
 
   const onUpdated = (tabId, changeInfo, tab) => {
@@ -111,6 +122,12 @@ export const createBackground = (api) => {
   const onActivated = async ({ tabId }) => {
     const tab = await api.tabs.get(tabId).catch(() => null)
     await refreshPopup(tabId, tab?.url)
+  }
+
+  // Synchronous and fire-and-forget: returning a promise here would tell the
+  // extension platform to keep the channel open for a reply nobody sends.
+  const onRuntimeMessage = (message) => {
+    if (message?.type === 'toggle-tab') toggle({ id: message.tabId, url: message.url })
   }
 
   const start = () => {
@@ -124,7 +141,8 @@ export const createBackground = (api) => {
     })
     api.tabs.onUpdated.addListener(onUpdated)
     api.tabs.onActivated.addListener(onActivated)
+    api.runtime.onMessage.addListener(onRuntimeMessage)
   }
 
-  return { start, toggle, refreshPopup, onAdded, onRemoved, reconcile }
+  return { start, toggle, refreshPopup, onAdded, onRemoved, reconcile, onRuntimeMessage }
 }

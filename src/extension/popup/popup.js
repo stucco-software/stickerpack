@@ -23,7 +23,7 @@ const start = async () => {
     action.hidden = false
     action.textContent = 'Open the sticker tray'
     action.addEventListener('click', () => {
-      api.tabs.sendMessage(tab.id, { type: 'toggle' }).finally(() => window.close())
+      api.runtime.sendMessage({ type: 'toggle-tab', tabId: tab.id, url }).catch(() => {}).then(() => window.close())
     })
     return
   }

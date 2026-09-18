@@ -42,7 +42,7 @@ beforeEach(() => {
     },
     action: { setPopup: vi.fn(async () => {}), onClicked: event(), openPopup: vi.fn(async () => {}) },
     commands: { onCommand: event() },
-    runtime: { onInstalled: event(), onStartup: event() }
+    runtime: { onInstalled: event(), onStartup: event(), onMessage: event() }
   }
   background = createBackground(api)
 })
@@ -89,7 +89,15 @@ it('unregisters and tells every tab when a site is revoked', async () => {
   expect(api.registered).toEqual([])
   expect(api.tabs.sendMessage).toHaveBeenCalledWith(1, { type: 'teardown', origin: GRANTED })
   expect(api.tabs.sendMessage).toHaveBeenCalledWith(2, { type: 'teardown', origin: GRANTED })
+  // Tab 1 is on the revoked origin, and is no longer granted, so it still gets the popup back.
   expect(api.action.setPopup).toHaveBeenCalledWith({ tabId: 1, popup: 'popup.html' })
+})
+
+it('leaves the popup cleared on tabs whose own site is still granted when another site is revoked', async () => {
+  api.grants.add(`${OTHER}/*`)
+  api.tabs.query.mockResolvedValue([{ id: 1, url: `${GRANTED}/page` }])
+  await background.onRemoved({ origins: [`${OTHER}/*`] })
+  expect(api.action.setPopup).toHaveBeenCalledWith({ tabId: 1, popup: '' })
 })
 
 it('swallows teardown messages that nothing receives', async () => {
@@ -110,4 +118,29 @@ it('reconciles registrations with the permissions it actually has', async () => 
   api.registered = [{ id: `sp:${OTHER}` }]
   await background.reconcile()
   expect(api.registered.map((script) => script.id)).toEqual([`sp:${GRANTED}`])
+})
+
+it('refreshes every open tab’s popup after reconciling, so a restart does not leave a stale one', async () => {
+  await background.reconcile()
+  expect(api.action.setPopup).toHaveBeenCalledWith({ tabId: 1, popup: '' })
+  expect(api.action.setPopup).toHaveBeenCalledWith({ tabId: 2, popup: 'popup.html' })
+})
+
+it('still injects and toggles when registering a newly granted origin fails', async () => {
+  api.tabs.query.mockResolvedValue([{ id: 3, url: `${OTHER}/page` }])
+  api.scripting.registerContentScripts.mockRejectedValueOnce(new Error('boom'))
+  await background.onAdded({ origins: [`${OTHER}/*`] })
+  expect(api.scripting.executeScript).toHaveBeenCalledWith({ target: { tabId: 3 }, files: ['content.js'] })
+  expect(api.tabs.sendMessage).toHaveBeenCalledWith(3, { type: 'toggle' })
+})
+
+it('falls back to the active tab when the command carries no tab', async () => {
+  await background.toggle(undefined)
+  expect(api.tabs.sendMessage).toHaveBeenCalledWith(1, { type: 'toggle' })
+})
+
+it('toggles a tab on request from the popup, for a tab that has no listener of its own', async () => {
+  background.start()
+  api.runtime.onMessage.fire({ type: 'toggle-tab', tabId: 1, url: `${GRANTED}/page` })
+  await vi.waitFor(() => expect(api.tabs.sendMessage).toHaveBeenCalledWith(1, { type: 'toggle' }))
 })
