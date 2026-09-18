@@ -174,7 +174,7 @@ dist/extension/firefox/   the same, with the Firefox manifest
 - `manifest.js` differences, and nothing else:
   - Chromium: `background: { service_worker: 'background.js' }`
   - Firefox: `background: { scripts: ['background.js'] }`, plus `browser_specific_settings: { gecko: { id: 'stickerpack@stucco.software', strict_min_version: '128.0' } }` — 128 is where `optional_host_permissions` landed.
-- Shared manifest: `manifest_version: 3`, no `host_permissions`, `optional_host_permissions: ['*://*/*']`, `permissions: ['storage', 'scripting', 'activeTab']`, an `action` with `default_popup` and icons, `web_accessible_resources` as above, and `commands` with `toggle-tray`.
+- Shared manifest: `manifest_version: 3`, no `host_permissions`, `optional_host_permissions: ['*://*/*']`, `permissions: ['storage', 'scripting', 'activeTab']`, an `action` with `default_popup` and icons, `web_accessible_resources` as above, and `commands` with `toggle-tray`, suggested as `Alt+Shift+S` by default and `MacCtrl+Shift+S` (Control+Shift+S) on Mac, because `Alt` is Option on Mac and Option combinations type characters. Both browsers let the user change it.
 - No `unlimitedStorage`: annotations are tiny, and it's a permission for nothing.
 - npm scripts: `build:extension`, and `dev:extension` for a watch build to load unpacked.
 
