@@ -9,7 +9,9 @@
 		"prepare": "svelte-kit sync || echo \"\"",
 		"prepack": "npm run build:lib",
 		"test:unit": "vitest",
-		"test": "npm run test:unit -- --run"
+		"test": "npm run test:unit -- --run",
+		"build:extension": "node scripts/build-extension.js",
+		"dev:extension": "node scripts/build-extension.js --watch"
 	},
 	"files": [
 		"dist"
