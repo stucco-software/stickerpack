@@ -39,7 +39,8 @@ Shipping order inside this spec: a private, local-first extension. Saving to a S
 | `pack.js` | `stickerMap(pack)` → `Map(canonicalUrl → bundledUrl)` |
 | `content.js` | Page-side entry: builds the map, mounts StickerPack, handles messages and URL changes |
 | `background.js` | Toolbar clicks, shortcut, permission changes, content script registration, per-tab popup |
-| `popup/popup.html`, `popup/popup.js` | Per-site opt-in and opt-out |
+| `popup/popup.html`, `popup/popup.js` | Per-site opt-in |
+| `options/options.html`, `options/options.js` | The list of stickered sites, and opting back out |
 | `manifest.js` | `manifest(target)` → manifest object for `'chrome'` or `'firefox'` |
 
 Each file is independently testable with a fake `api`. `content.js` mounts the library and `page.js` imports its `pageSource`; nothing else in the extension touches it. Only `background.js` touches permission changes and script registration.
@@ -112,6 +113,7 @@ Clearing the popup is an optimisation, not a requirement: the popup handles the 
 - A query-only change is the same `pageSource`, so nothing happens.
 
 **Revoking a site**
+- Revoking lives on the **options page**, not the popup: once a site is granted the toolbar button toggles the tray directly, so its popup is never shown again. The options page lists every granted origin with a "Stop stickering this site" button, and is reached by right-clicking the toolbar icon (Chrome: Options; Firefox: Manage extension). The browser's own site-access UI works too.
 - "Stop stickering this site" calls `api.permissions.remove`. The background reacts to `permissions.onRemoved` and unregisters that origin's content script.
 - By then the grant is gone, so tab URLs are unreadable again and the background can't tell which tabs were on that site. It therefore **broadcasts** `{ type: 'teardown', origin }` to every tab id (`tabs.query({})` returns ids without any permission) and restores the popup on all of them. Each content script compares the origin with its own and ignores anything else; granted tabs get their popup cleared again on their next update.
 - Most tabs have no content script listening, so most of those messages reject. Those rejections are swallowed where they happen and never reach the inject-and-retry path, which belongs to toggling, not teardown.
@@ -174,7 +176,7 @@ dist/extension/firefox/   the same, with the Firefox manifest
 - `manifest.js` differences, and nothing else:
   - Chromium: `background: { service_worker: 'background.js' }`
   - Firefox: `background: { scripts: ['background.js'] }`, plus `browser_specific_settings: { gecko: { id: 'stickerpack@stucco.software', strict_min_version: '128.0' } }` — 128 is where `optional_host_permissions` landed.
-- Shared manifest: `manifest_version: 3`, no `host_permissions`, `optional_host_permissions: ['*://*/*']`, `permissions: ['storage', 'scripting', 'activeTab']`, an `action` with `default_popup` and icons, `web_accessible_resources` as above, and `commands` with `toggle-tray`, suggested as `Alt+Shift+S` by default and `MacCtrl+Shift+S` (Control+Shift+S) on Mac, because `Alt` is Option on Mac and Option combinations type characters. Both browsers let the user change it.
+- Shared manifest: `manifest_version: 3`, no `host_permissions`, `optional_host_permissions: ['*://*/*']`, `permissions: ['storage', 'scripting', 'activeTab']`, an `action` with `default_popup` and icons, an `options_ui` page, `web_accessible_resources` as above, and `commands` with `toggle-tray`, suggested as `Alt+Shift+S` by default and `MacCtrl+Shift+S` (Control+Shift+S) on Mac, because `Alt` is Option on Mac and Option combinations type characters. Both browsers let the user change it.
 - No `unlimitedStorage`: annotations are tiny, and it's a permission for nothing.
 - npm scripts: `build:extension`, and `dev:extension` for a watch build to load unpacked.
 
