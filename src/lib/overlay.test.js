@@ -161,3 +161,13 @@ it('re-resolves a sticker whose anchor was replaced with an equivalent node', as
   await nextFrame()
   expect(stickers()).toHaveLength(1)
 })
+
+it('draws stickers through resolveImage without changing the annotation', () => {
+  overlay.destroy()
+  overlay = createOverlay({ resolveImage: (src) => `${src}?local` })
+  const annotation = annotationAt('body > p:nth-child(1)')
+  overlay.render(annotation)
+  expect(stickers()[0].getAttribute('src')).toBe(`${SRC}?local`)
+  expect(stickers()[0].hasAttribute('loading')).toBe(false)
+  expect(annotation.body.id).toBe(SRC)
+})

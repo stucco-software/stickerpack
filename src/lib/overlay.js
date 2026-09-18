@@ -39,7 +39,7 @@ const STYLE = `
 }
 `
 
-export const createOverlay = () => {
+export const createOverlay = ({ resolveImage = (src) => src } = {}) => {
   const host = document.createElement('div')
   host.setAttribute('data-stickerpack', '')
   host.style.cssText = 'all: initial; display: block;'
@@ -139,7 +139,7 @@ export const createOverlay = () => {
         event.stopPropagation()
         clickHandler?.(annotation)
       })
-      img.src = annotation.body.id
+      img.src = resolveImage(annotation.body.id)
       const entry = { annotation, img, element: null, ...position(annotation) }
       entries.set(annotation.id, entry)
       attach(entry)

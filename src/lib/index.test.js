@@ -225,3 +225,46 @@ it('ignores a stickers option that is not an array', () => {
   destroy = StickerPack({ storage: memory(), defaultPack: false, stickers: '/a.png' })
   expect(shadow().querySelectorAll('.tray img')).toHaveLength(0)
 })
+
+it('exposes open, close and toggle on the handle', () => {
+  destroy = StickerPack({ storage: memory() })
+  const tray = () => shadow().querySelector('.tray')
+  expect(tray().hidden).toBe(true)
+  destroy.open()
+  expect(tray().hidden).toBe(false)
+  destroy.toggle()
+  expect(tray().hidden).toBe(true)
+  destroy.toggle()
+  expect(tray().hidden).toBe(false)
+  destroy.close()
+  expect(tray().hidden).toBe(true)
+})
+
+it('gives a second instance a safe no-op handle', () => {
+  vi.spyOn(console, 'warn').mockImplementation(() => {})
+  destroy = StickerPack({ storage: memory() })
+  const second = StickerPack({ storage: memory() })
+  expect(() => {
+    second.open()
+    second.toggle()
+    second.close()
+    second()
+  }).not.toThrow()
+  expect(shadow().querySelector('.tray').hidden).toBe(true)
+})
+
+it('passes resolveImage through to the tray and overlay', () => {
+  destroy = StickerPack({
+    storage: memory(),
+    defaultPack: false,
+    stickers: ['/stickers/duck.png'],
+    resolveImage: (src) => `${src}?local`
+  })
+  const img = shadow().querySelector('.tray button img')
+  expect(img.getAttribute('src')).toBe(`${new URL('/stickers/duck.png', location.href).href}?local`)
+})
+
+it('mounts with no trigger when asked', () => {
+  destroy = StickerPack({ storage: memory(), trigger: 'none' })
+  expect(shadow().querySelector('.trigger')).toBe(null)
+})
