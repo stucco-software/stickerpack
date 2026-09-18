@@ -35,9 +35,11 @@ const bundle = async ({ entry, file }, outDir, watch) => build({
 
 const buildTarget = async (target, watch) => {
   // Not under dist/: the library build empties that directory, which would delete
-  // an extension you have loaded unpacked in a browser.
+  // an extension you have loaded unpacked in a browser. In watch mode, skip the
+  // rm entirely too: a rebuild shouldn't make an already-loaded unpacked
+  // extension disappear out from under the browser.
   const outDir = `dist-extension/${target}`
-  await rm(outDir, { recursive: true, force: true })
+  if (!watch) await rm(outDir, { recursive: true, force: true })
   await mkdir(outDir, { recursive: true })
 
   for (const item of ENTRIES) await bundle(item, outDir, watch)

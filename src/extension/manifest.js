@@ -5,11 +5,11 @@ const shared = {
   description: 'Put stickers on any website. They stay where you put them, and they stay yours.',
   permissions: ['storage', 'scripting', 'activeTab'],
   optional_host_permissions: ['*://*/*'],
-  icons: { 48: 'icons/icon-48.png', 128: 'icons/icon-128.png' },
+  icons: { 16: 'icons/icon-16.png', 48: 'icons/icon-48.png', 128: 'icons/icon-128.png' },
   action: {
     default_title: 'Stickerpack',
     default_popup: 'popup.html',
-    default_icon: { 48: 'icons/icon-48.png', 128: 'icons/icon-128.png' }
+    default_icon: { 16: 'icons/icon-16.png', 48: 'icons/icon-48.png', 128: 'icons/icon-128.png' }
   },
   options_ui: { page: 'options.html', open_in_tab: false },
   web_accessible_resources: [{ resources: ['stickers/*'], matches: ['*://*/*'] }],

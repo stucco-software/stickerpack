@@ -104,3 +104,34 @@ it('ignores a teardown for another origin', () => {
   expect(handles[0]).not.toHaveBeenCalled()
   expect(api.listeners).toHaveLength(1)
 })
+
+it('survives a remount that throws, and keeps working afterwards', () => {
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+  mount.mockImplementationOnce(() => {
+    const handle = fakeHandle()
+    handles.push(handle)
+    return handle
+  }).mockImplementationOnce(() => {
+    throw new Error('boom')
+  })
+  start()
+  history.pushState(null, '', '/two')
+  expect(() => api.send({ type: 'url-changed' })).not.toThrow()
+  expect(handles[0]).toHaveBeenCalledTimes(1)
+  expect(warn).toHaveBeenCalledWith('stickerpack: could not remount', expect.any(Error))
+  expect(() => api.send({ type: 'toggle' })).not.toThrow()
+  warn.mockRestore()
+})
+
+it('does nothing on a page with no document.body', () => {
+  const body = document.body
+  document.documentElement.removeChild(body)
+  try {
+    let result
+    expect(() => { result = startContent({ api, mount, storage: { list: async () => [] }, images: (src) => src }) }).not.toThrow()
+    expect(typeof result).toBe('function')
+    expect(mount).not.toHaveBeenCalled()
+  } finally {
+    document.documentElement.appendChild(body)
+  }
+})

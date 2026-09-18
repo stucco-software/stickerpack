@@ -150,6 +150,24 @@ it('re-appends the host if something removes it from the page', async () => {
   expect(document.body.contains(overlay.host)).toBe(true)
 })
 
+it('does no work on a body mutation when nothing is rendered', async () => {
+  const raf = vi.spyOn(window, 'requestAnimationFrame')
+  document.body.append(document.createElement('span'))
+  await wait(0)
+  expect(raf).not.toHaveBeenCalled()
+  raf.mockRestore()
+})
+
+it('still schedules a reposition on a body mutation once a sticker is rendered', async () => {
+  overlay.render(annotationAt('body > p:nth-child(1)'))
+  await nextFrame()
+  const raf = vi.spyOn(window, 'requestAnimationFrame')
+  document.body.append(document.createElement('span'))
+  await wait(0)
+  expect(raf).toHaveBeenCalled()
+  raf.mockRestore()
+})
+
 it('re-resolves a sticker whose anchor was replaced with an equivalent node', async () => {
   overlay.render(annotationAt('body > p:nth-child(1)'))
   expect(stickers()).toHaveLength(1)

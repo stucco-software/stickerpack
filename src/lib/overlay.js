@@ -107,6 +107,7 @@ export const createOverlay = ({ resolveImage = (src) => src } = {}) => {
 
   const mutationObserver = new MutationObserver((records) => {
     if (!destroyed && !host.isConnected) document.body.append(host)
+    if (entries.size === 0) return
     schedule()
     const hasOrphan = Array.from(entries.values()).some((entry) => !entry.element?.isConnected)
     const hasContentChange = records.some((record) => record.type === 'characterData' || record.addedNodes.length > 0)

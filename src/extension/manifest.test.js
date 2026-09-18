@@ -22,6 +22,12 @@ it('ships the pieces the extension needs', () => {
   })
 })
 
+it('includes a 16px icon alongside the toolbar sizes', () => {
+  const built = manifest('chrome')
+  expect(built.icons).toEqual({ 16: 'icons/icon-16.png', 48: 'icons/icon-48.png', 128: 'icons/icon-128.png' })
+  expect(built.action.default_icon).toEqual({ 16: 'icons/icon-16.png', 48: 'icons/icon-48.png', 128: 'icons/icon-128.png' })
+})
+
 it('differs only in how the background runs, plus the Firefox id', () => {
   const chrome = manifest('chrome')
   const firefox = manifest('firefox')

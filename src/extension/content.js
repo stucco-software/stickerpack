@@ -15,14 +15,19 @@ export const startContent = ({
   images = resolveImage(stickerMap())
 } = {}) => {
   if (globalThis[STARTED]) return globalThis[STARTED]
+  if (!document.body) return () => {}
 
   const open = () => mount({ trigger: 'none', storage, resolveImage: images })
 
   let handle = open()
 
   const watcher = watchUrl(() => {
-    handle()
-    handle = open()
+    try {
+      handle()
+      handle = open()
+    } catch (error) {
+      console.warn('stickerpack: could not remount', error)
+    }
   })
 
   const stop = () => {
