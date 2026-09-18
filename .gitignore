@@ -25,3 +25,6 @@ vite.config.ts.timestamp-*
 
 # brainstorming companion
 .superpowers/
+
+# built extension
+/dist-extension

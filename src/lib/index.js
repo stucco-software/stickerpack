@@ -17,10 +17,15 @@ const warn = (message, ...details) => console.warn(`stickerpack: ${message}`, ..
 export default function StickerPack(options = {}) {
   if (globalThis[ACTIVE]) {
     warn('StickerPack() is already running, ignoring this call.')
-    return () => {}
+    const noop = () => {}
+    noop.open = () => {}
+    noop.close = () => {}
+    noop.toggle = () => {}
+    return noop
   }
 
   const { stickers = [], defaultPack: includeDefaultPack = true, trigger } = options
+  const resolveImage = typeof options.resolveImage === 'function' ? options.resolveImage : (src) => src
   const storage = options.storage ?? localStorageAdapter()
   const source = pageSource()
   const ownedStickers = (Array.isArray(stickers) ? stickers : []).flatMap((src) => {
@@ -34,7 +39,7 @@ export default function StickerPack(options = {}) {
   const pack = [...(includeDefaultPack ? defaultPack : []), ...ownedStickers]
   let destroyed = false
 
-  const overlay = createOverlay()
+  const overlay = createOverlay({ resolveImage })
 
   overlay.onStickerClick(async (annotation) => {
     overlay.unrender(annotation.id)
@@ -53,6 +58,7 @@ export default function StickerPack(options = {}) {
       host: overlay.host,
       stickers: pack,
       trigger,
+      resolveImage,
       onOpen: () => overlay.setPeelable(true),
       onClose: () => overlay.setPeelable(false),
       onPlace: async ({ src, element, clientX, clientY }) => {
@@ -97,6 +103,10 @@ export default function StickerPack(options = {}) {
     overlay.destroy()
     if (globalThis[ACTIVE] === destroy) globalThis[ACTIVE] = null
   }
+
+  destroy.open = () => tray.open()
+  destroy.close = () => tray.close()
+  destroy.toggle = () => tray.toggle()
 
   globalThis[ACTIVE] = destroy
   return destroy

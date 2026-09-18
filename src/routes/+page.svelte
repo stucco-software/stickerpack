@@ -34,7 +34,8 @@
     ['stickers', 'string[]', '[]', 'Image URLs to add to the pack.'],
     ['defaultPack', 'boolean', 'true', 'Include the Stucco default pack.'],
     ['storage', 'adapter', 'localStorageAdapter()', 'Where stickers are saved. See below.'],
-    ['trigger', 'Element', 'the ✦ button', 'Your own button to open the tray.']
+    ['trigger', 'Element | "none"', 'the ✦ button', 'Your own button to open the tray, or "none" to show no button.'],
+    ['resolveImage', 'function', 'src => src', 'Change where a sticker image loads from, without changing what the sticker is.']
   ]
 
   const steps = [
@@ -68,6 +69,7 @@
 
     <p class="download">
       <a href="/stickerpack.js" download>Download stickerpack.js</a>
+      <a class="secondary" href="/extension">Or sticker every other site →</a>
     </p>
 
     <aside class="try">
@@ -83,6 +85,7 @@
         <li><a href="#html">HTML</a></li>
         <li><a href="#javascript">JavaScript</a></li>
         <li><a href="#sticking">Sticking</a></li>
+        <li><a href="/extension">Extension</a></li>
         <!-- <li><a href="#storage">Storage</a></li>
         <li><a href="#stickers">Sticker data</a></li>
         <li><a href="#anchoring">How it sticks</a></li> -->
@@ -127,7 +130,8 @@
     <CodeBlock code={snippets.jsOptions} label="all the options" />
 
     <p class="note">
-      One sticker pack per page. Don't get greedy!
+      One sticker pack per page. Don't get greedy! The handle you get back is a function that unmounts,
+      and it carries <code>open()</code>, <code>close()</code> and <code>toggle()</code> so your own UI can drive the tray.
     </p>
     <CodeBlock code={snippets.svelte} label="svelte" />
   </section>
@@ -196,6 +200,8 @@
   <footer>
     <p>
       Made with specially formulated HTML adhesives by <a href="https://stucco.software">Stucco Software</a>.
+      Sticker art from <a href="https://github.com/jdecked/twemoji">Twemoji</a>, <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.
+      <a href="/privacy">Privacy</a>.
     </p>
   </footer>
 </main>
@@ -338,6 +344,24 @@
   .download a:focus-visible {
     background: var(--tomato);
     box-shadow: 4px 4px 0 var(--ink);
+  }
+
+  .download .secondary {
+    padding: 0.7rem 0;
+    background: none;
+    color: inherit;
+    box-shadow: none;
+    text-decoration: underline;
+    text-decoration-color: var(--tomato);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.2em;
+  }
+
+  .download .secondary:hover,
+  .download .secondary:focus-visible {
+    background: none;
+    color: var(--tomato);
+    box-shadow: none;
   }
 
   .download span {

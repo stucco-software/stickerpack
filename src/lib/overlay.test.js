@@ -2,7 +2,7 @@ import { it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { createOverlay } from './overlay.js'
 import { createAnnotation } from './annotation.js'
 
-const SRC = 'https://stickerpack.stucco.software/stickers/eyes.png'
+const SRC = 'https://stickerpack.stucco.software/stickers/eyes.svg'
 
 const annotationAt = (value) => createAnnotation({
   src: SRC,
@@ -150,6 +150,24 @@ it('re-appends the host if something removes it from the page', async () => {
   expect(document.body.contains(overlay.host)).toBe(true)
 })
 
+it('does no work on a body mutation when nothing is rendered', async () => {
+  const raf = vi.spyOn(window, 'requestAnimationFrame')
+  document.body.append(document.createElement('span'))
+  await wait(0)
+  expect(raf).not.toHaveBeenCalled()
+  raf.mockRestore()
+})
+
+it('still schedules a reposition on a body mutation once a sticker is rendered', async () => {
+  overlay.render(annotationAt('body > p:nth-child(1)'))
+  await nextFrame()
+  const raf = vi.spyOn(window, 'requestAnimationFrame')
+  document.body.append(document.createElement('span'))
+  await wait(0)
+  expect(raf).toHaveBeenCalled()
+  raf.mockRestore()
+})
+
 it('re-resolves a sticker whose anchor was replaced with an equivalent node', async () => {
   overlay.render(annotationAt('body > p:nth-child(1)'))
   expect(stickers()).toHaveLength(1)
@@ -160,4 +178,14 @@ it('re-resolves a sticker whose anchor was replaced with an equivalent node', as
   await wait(400)
   await nextFrame()
   expect(stickers()).toHaveLength(1)
+})
+
+it('draws stickers through resolveImage without changing the annotation', () => {
+  overlay.destroy()
+  overlay = createOverlay({ resolveImage: (src) => `${src}?local` })
+  const annotation = annotationAt('body > p:nth-child(1)')
+  overlay.render(annotation)
+  expect(stickers()[0].getAttribute('src')).toBe(`${SRC}?local`)
+  expect(stickers()[0].hasAttribute('loading')).toBe(false)
+  expect(annotation.body.id).toBe(SRC)
 })

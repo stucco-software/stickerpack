@@ -27,6 +27,9 @@ const STYLE = `
   border: 1px solid #ccc;
   border-radius: 0.75rem;
 }
+.tray.no-trigger {
+  bottom: 1rem;
+}
 .tray button {
   width: 3rem;
   height: 3rem;
@@ -61,7 +64,16 @@ const STYLE = `
 }
 `
 
-export const createTray = ({ root, host, stickers, trigger, onOpen, onClose, onPlace }) => {
+export const createTray = ({
+  root,
+  host,
+  stickers,
+  trigger,
+  onOpen,
+  onClose,
+  onPlace,
+  resolveImage = (src) => src
+}) => {
   let state = 'idle'
   let chosen = null
   let destroyed = false
@@ -69,6 +81,8 @@ export const createTray = ({ root, host, stickers, trigger, onOpen, onClose, onP
   const style = document.createElement('style')
   style.textContent = STYLE
 
+  // trigger: 'none' means the host drives the tray itself (the browser extension does).
+  const ownerTrigger = trigger && trigger !== 'none' ? trigger : null
   const floating = trigger ? null : document.createElement('button')
   if (floating) {
     floating.className = 'trigger'
@@ -77,10 +91,10 @@ export const createTray = ({ root, host, stickers, trigger, onOpen, onClose, onP
     floating.setAttribute('aria-label', 'Stickers')
     floating.setAttribute('aria-expanded', 'false')
   }
-  const triggerElement = trigger ?? floating
+  const triggerElement = ownerTrigger ?? floating
 
   const tray = document.createElement('div')
-  tray.className = 'tray'
+  tray.className = trigger === 'none' ? 'tray no-trigger' : 'tray'
   tray.hidden = true
 
   const capture = document.createElement('div')
@@ -92,14 +106,16 @@ export const createTray = ({ root, host, stickers, trigger, onOpen, onClose, onP
   ghost.alt = ''
   ghost.hidden = true
 
-  const open = () => {
+  const openTray = () => {
+    if (state === 'placing') stopPlacing()
     state = 'open'
     tray.hidden = false
     floating?.setAttribute('aria-expanded', 'true')
     onOpen?.()
   }
 
-  const close = () => {
+  const closeTray = () => {
+    if (state === 'placing') stopPlacing()
     state = 'idle'
     tray.hidden = true
     floating?.setAttribute('aria-expanded', 'false')
@@ -114,10 +130,10 @@ export const createTray = ({ root, host, stickers, trigger, onOpen, onClose, onP
   }
 
   const choose = (sticker) => {
-    close()
+    closeTray()
     state = 'placing'
     chosen = sticker
-    ghost.src = sticker.src
+    ghost.src = resolveImage(sticker.src)
     capture.hidden = false
   }
 
@@ -125,7 +141,7 @@ export const createTray = ({ root, host, stickers, trigger, onOpen, onClose, onP
     const button = document.createElement('button')
     button.type = 'button'
     const img = document.createElement('img')
-    img.src = sticker.src
+    img.src = resolveImage(sticker.src)
     img.alt = sticker.alt
     img.draggable = false
     button.append(img)
@@ -133,9 +149,9 @@ export const createTray = ({ root, host, stickers, trigger, onOpen, onClose, onP
     tray.append(button)
   }
 
-  const toggle = () => {
-    if (state === 'idle') open()
-    else if (state === 'open') close()
+  const toggleTray = () => {
+    if (state === 'idle') openTray()
+    else if (state === 'open') closeTray()
     else stopPlacing()
   }
 
@@ -154,27 +170,30 @@ export const createTray = ({ root, host, stickers, trigger, onOpen, onClose, onP
       .find((candidate) => candidate !== host && candidate.getRootNode() === document)
     stopPlacing()
     if (!sticker || !element) return
-    if (trigger && trigger.contains(element)) return
+    if (ownerTrigger && ownerTrigger.contains(element)) return
     onPlace?.({ src: sticker.src, element, clientX: event.clientX, clientY: event.clientY })
   }
 
   const onKeyDown = (event) => {
     if (event.key !== 'Escape') return
-    if (state === 'open') close()
+    if (state === 'open') closeTray()
     else if (state === 'placing') stopPlacing()
   }
 
   root.append(style, capture, ghost, ...(floating ? [floating] : []), tray)
-  triggerElement.addEventListener('click', toggle)
+  triggerElement?.addEventListener('click', toggleTray)
   capture.addEventListener('pointermove', onPointerMove)
   capture.addEventListener('click', onCaptureClick)
   document.addEventListener('keydown', onKeyDown)
 
   return {
+    open: () => { if (!destroyed) openTray() },
+    close: () => { if (!destroyed) closeTray() },
+    toggle: () => { if (!destroyed) toggleTray() },
     destroy() {
       if (destroyed) return
       destroyed = true
-      triggerElement.removeEventListener('click', toggle)
+      triggerElement?.removeEventListener('click', toggleTray)
       document.removeEventListener('keydown', onKeyDown)
       for (const element of [style, capture, ghost, tray, floating]) element?.remove()
     }

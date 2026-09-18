@@ -37,7 +37,7 @@ it('re-exports the localStorage adapter', () => {
 
 it('mounts, loads this page’s stickers and unmounts', async () => {
   const saved = createAnnotation({
-    src: 'https://stickerpack.stucco.software/stickers/eyes.png',
+    src: 'https://stickerpack.stucco.software/stickers/eyes.svg',
     source: pageSource(),
     selectors: [{ type: 'CssSelector', value: 'body > p:nth-child(1)' }],
     x: 50,
@@ -107,7 +107,7 @@ it('unrenders a placed sticker when saving fails', async () => {
 
 it('peels a sticker while the tray is open', async () => {
   const saved = createAnnotation({
-    src: 'https://stickerpack.stucco.software/stickers/eyes.png',
+    src: 'https://stickerpack.stucco.software/stickers/eyes.svg',
     source: pageSource(),
     selectors: [{ type: 'CssSelector', value: 'body > p:nth-child(1)' }],
     x: 50,
@@ -176,7 +176,7 @@ it('skips owner sticker URLs that fail to parse', () => {
 it('re-renders a sticker when removing fails', async () => {
   const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
   const saved = createAnnotation({
-    src: 'https://stickerpack.stucco.software/stickers/eyes.png',
+    src: 'https://stickerpack.stucco.software/stickers/eyes.svg',
     source: pageSource(),
     selectors: [{ type: 'CssSelector', value: 'body > p:nth-child(1)' }],
     x: 50,
@@ -204,7 +204,7 @@ it('destroying immediately prevents a pending sticker list from rendering', asyn
   expect(() => stop()).not.toThrow()
   await vi.waitFor(() => expect(storage.list).toHaveBeenCalled())
   resolveList([createAnnotation({
-    src: 'https://stickerpack.stucco.software/stickers/eyes.png',
+    src: 'https://stickerpack.stucco.software/stickers/eyes.svg',
     source: pageSource(),
     selectors: [{ type: 'CssSelector', value: 'body > p:nth-child(1)' }],
     x: 50,
@@ -224,4 +224,47 @@ it('cleans up the overlay when the trigger is not an element', () => {
 it('ignores a stickers option that is not an array', () => {
   destroy = StickerPack({ storage: memory(), defaultPack: false, stickers: '/a.png' })
   expect(shadow().querySelectorAll('.tray img')).toHaveLength(0)
+})
+
+it('exposes open, close and toggle on the handle', () => {
+  destroy = StickerPack({ storage: memory() })
+  const tray = () => shadow().querySelector('.tray')
+  expect(tray().hidden).toBe(true)
+  destroy.open()
+  expect(tray().hidden).toBe(false)
+  destroy.toggle()
+  expect(tray().hidden).toBe(true)
+  destroy.toggle()
+  expect(tray().hidden).toBe(false)
+  destroy.close()
+  expect(tray().hidden).toBe(true)
+})
+
+it('gives a second instance a safe no-op handle', () => {
+  vi.spyOn(console, 'warn').mockImplementation(() => {})
+  destroy = StickerPack({ storage: memory() })
+  const second = StickerPack({ storage: memory() })
+  expect(() => {
+    second.open()
+    second.toggle()
+    second.close()
+    second()
+  }).not.toThrow()
+  expect(shadow().querySelector('.tray').hidden).toBe(true)
+})
+
+it('passes resolveImage through to the tray and overlay', () => {
+  destroy = StickerPack({
+    storage: memory(),
+    defaultPack: false,
+    stickers: ['/stickers/duck.png'],
+    resolveImage: (src) => `${src}?local`
+  })
+  const img = shadow().querySelector('.tray button img')
+  expect(img.getAttribute('src')).toBe(`${new URL('/stickers/duck.png', location.href).href}?local`)
+})
+
+it('mounts with no trigger when asked', () => {
+  destroy = StickerPack({ storage: memory(), trigger: 'none' })
+  expect(shadow().querySelector('.trigger')).toBe(null)
 })

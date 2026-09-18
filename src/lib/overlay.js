@@ -39,7 +39,7 @@ const STYLE = `
 }
 `
 
-export const createOverlay = () => {
+export const createOverlay = ({ resolveImage = (src) => src } = {}) => {
   const host = document.createElement('div')
   host.setAttribute('data-stickerpack', '')
   host.style.cssText = 'all: initial; display: block;'
@@ -107,6 +107,7 @@ export const createOverlay = () => {
 
   const mutationObserver = new MutationObserver((records) => {
     if (!destroyed && !host.isConnected) document.body.append(host)
+    if (entries.size === 0) return
     schedule()
     const hasOrphan = Array.from(entries.values()).some((entry) => !entry.element?.isConnected)
     const hasContentChange = records.some((record) => record.type === 'characterData' || record.addedNodes.length > 0)
@@ -139,7 +140,7 @@ export const createOverlay = () => {
         event.stopPropagation()
         clickHandler?.(annotation)
       })
-      img.src = annotation.body.id
+      img.src = resolveImage(annotation.body.id)
       const entry = { annotation, img, element: null, ...position(annotation) }
       entries.set(annotation.id, entry)
       attach(entry)

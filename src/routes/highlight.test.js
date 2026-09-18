@@ -38,3 +38,10 @@ it('highlights json properties, strings and literals', () => {
   expect(html).toContain(token('literal', '42.5'))
   expect(html).toContain(token('literal', 'true'))
 })
+
+it('highlights shell comments, commands and flags', () => {
+  const html = highlight('# build it\nnpm run build:extension --watch', 'sh')
+  expect(html).toContain(token('comment', '# build it'))
+  expect(html).toContain(token('function', 'npm'))
+  expect(html).toContain(token('attribute', '--watch'))
+})

@@ -28,7 +28,8 @@ const destroy = StickerPack({
   stickers: ['/stickers/duck.png'],     // added to the default pack
   defaultPack: true,                    // false = only your stickers
   storage: localStorageAdapter(),       // where stickers are saved
-  trigger: document.querySelector('#stickers') // your own button
+  trigger: document.querySelector('#stickers'), // your own button, or 'none'
+  resolveImage: (src) => src            // where sticker images load from
 })
 `
 
@@ -57,7 +58,7 @@ export const exampleSticker = `
   "type": "Annotation",
   "motivation": "tagging",
   "created": "2026-09-16T18:04:00.000Z",
-  "body": { "id": "https://stickerpack.stucco.software/stickers/eyes.png", "type": "Image" },
+  "body": { "id": "https://stickerpack.stucco.software/stickers/eyes.svg", "type": "Image" },
   "target": {
     "source": "https://example.com/about",
     "selector": [
