@@ -40,6 +40,13 @@ const json = tokenizer([
   ['literal', String.raw`\b(?:true|false|null)\b|-?\b\d+(?:\.\d+)?\b`]
 ])
 
+const sh = tokenizer([
+  ['comment', String.raw`#[^\n]*`],
+  ['string', STRING],
+  ['attribute', String.raw`(?<=\s)--?[\w-]+`],
+  ['function', String.raw`(?<=^|\n)\s*[\w./-]+`]
+])
+
 const TAG = /<!--[\s\S]*?-->|<\/?[A-Za-z][\w-]*(?:\s[^<>]*?)?\/?>/g
 const TAG_PARTS = /^(<\/?)([\w-]+)([\s\S]*?)(\/?>)$/
 const ATTRIBUTE = /([\w-]+)(?:=("[^"]*"|'[^']*'|[^\s>]+))?/g
@@ -55,6 +62,6 @@ const tag = ([text]) => {
 
 const html = (code) => replaceMatches(code, TAG, tag)
 
-const grammars = { js, json, html }
+const grammars = { js, json, html, sh }
 
 export const highlight = (code, language) => (grammars[language] ?? escape)(code)

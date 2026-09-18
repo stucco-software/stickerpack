@@ -69,6 +69,7 @@
 
     <p class="download">
       <a href="/stickerpack.js" download>Download stickerpack.js</a>
+      <a class="secondary" href="/extension">Or sticker every other site →</a>
     </p>
 
     <aside class="try">
@@ -84,6 +85,7 @@
         <li><a href="#html">HTML</a></li>
         <li><a href="#javascript">JavaScript</a></li>
         <li><a href="#sticking">Sticking</a></li>
+        <li><a href="/extension">Extension</a></li>
         <!-- <li><a href="#storage">Storage</a></li>
         <li><a href="#stickers">Sticker data</a></li>
         <li><a href="#anchoring">How it sticks</a></li> -->
@@ -340,6 +342,24 @@
   .download a:focus-visible {
     background: var(--tomato);
     box-shadow: 4px 4px 0 var(--ink);
+  }
+
+  .download .secondary {
+    padding: 0.7rem 0;
+    background: none;
+    color: inherit;
+    box-shadow: none;
+    text-decoration: underline;
+    text-decoration-color: var(--tomato);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.2em;
+  }
+
+  .download .secondary:hover,
+  .download .secondary:focus-visible {
+    background: none;
+    color: var(--tomato);
+    box-shadow: none;
   }
 
   .download span {
