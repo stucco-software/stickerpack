@@ -1,7 +1,7 @@
 const shared = {
   manifest_version: 3,
   name: 'Stickerpack',
-  version: '0.0.1',
+  version: '1.0.0',
   description: 'Put stickers on any website. They stay where you put them, and they stay yours.',
   permissions: ['storage', 'scripting', 'activeTab'],
   optional_host_permissions: ['*://*/*'],
@@ -28,7 +28,12 @@ export const manifest = (target) => target === 'firefox'
       background: { scripts: ['background.js'] },
       browser_specific_settings: {
         // optional_host_permissions landed in Firefox 128.
-        gecko: { id: 'stickerpack@stucco.software', strict_min_version: '128.0' }
+        gecko: {
+          id: 'stickerpack@stucco.software',
+          strict_min_version: '128.0',
+          // Self-hosted: Firefox checks here for new signed builds.
+          update_url: 'https://stickerpack.stucco.software/updates.json'
+        }
       }
     }
   : { ...shared, background: { service_worker: 'background.js' } }

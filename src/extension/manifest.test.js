@@ -35,7 +35,8 @@ it('differs only in how the background runs, plus the Firefox id', () => {
   expect(firefox.background).toEqual({ scripts: ['background.js'] })
   expect(firefox.browser_specific_settings.gecko).toEqual({
     id: 'stickerpack@stucco.software',
-    strict_min_version: '128.0'
+    strict_min_version: '128.0',
+    update_url: 'https://stickerpack.stucco.software/updates.json'
   })
   expect(chrome.browser_specific_settings).toBeUndefined()
 
