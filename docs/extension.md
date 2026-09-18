@@ -95,6 +95,13 @@ Your browser's own "site access" settings work too.
   `chrome://` and `about:` pages, the extension stores, PDFs and local files. The popup
   tells you so.
 
+## Sticker art
+
+The stickers bundled with the extension come from
+[Twemoji](https://github.com/jdecked/twemoji), used under
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). See
+`static/stickers/ATTRIBUTION.md`.
+
 ## For developers
 
 ```sh

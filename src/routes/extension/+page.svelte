@@ -175,6 +175,7 @@ npm test                  # the whole suite, extension included
   <footer>
     <p>
       <a href="/">← Stickers for websites</a> · Made with specially formulated HTML adhesives by <a href="https://stucco.software">Stucco Software</a>.
+      Sticker art from <a href="https://github.com/jdecked/twemoji">Twemoji</a>, <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.
     </p>
   </footer>
 </main>
